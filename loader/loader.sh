@@ -25,7 +25,7 @@ if command -v raspi-config >/dev/null 2>&1; then
   sudo raspi-config nonint do_boot_splash 0 || true
 fi
 
-# 5. Определяем реальный cmdline.txt (bookworm чаще использует /boot/firmware)
+# 5. Определяем, какой cmdline.txt используется (на твоём образе это /boot/firmware/cmdline.txt)
 CMDLINE_FILE=""
 if [ -f /boot/firmware/cmdline.txt ]; then
   CMDLINE_FILE="/boot/firmware/cmdline.txt"
@@ -33,7 +33,7 @@ elif [ -f /boot/cmdline.txt ]; then
   CMDLINE_FILE="/boot/cmdline.txt"
 fi
 
-# 6. Добавляем параметры ядра для тихой загрузки и отключения курсора
+# 6. Если cmdline найден — добавляем параметры ядра
 if [ -n "$CMDLINE_FILE" ]; then
   # consoleblank=0 – не гасить экран
   if ! grep -q 'consoleblank=0' "$CMDLINE_FILE"; then
