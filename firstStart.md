@@ -48,13 +48,11 @@ raspi-config nonint do_i2c 0
 raspi-config nonint do_serial 2
 raspi-config nonint do_expand_rootfs
 fi
-REPO_URL="https://github.com/USERNAME/REPO.git"
-BRANCH="main"
 STAGING_DIR="/home/pi/treed/.staging"
-REPO_DIR="$STAGING_DIR/repo"
+REPO_DIR="$STAGING_DIR/treed-mainshellOS"
 mkdir -p "$STAGING_DIR"
 rm -rf "$REPO_DIR"
-git clone --branch "$BRANCH" "$REPO_URL" "$REPO_DIR"
+git clone https://github.com/Yawllen/treed-mainshellOS.git "$REPO_DIR"
 chmod +x "$REPO_DIR/loader/loader.sh"
 "$REPO_DIR/loader/loader.sh"
 EOF
