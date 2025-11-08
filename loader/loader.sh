@@ -29,18 +29,37 @@ fi
 CMDLINE_FILE="/boot/firmware/cmdline.txt"
 
 if [ -f "$CMDLINE_FILE" ]; then
-  # consoleblank=0 – не гасить экран
+  # 5.1. Переносим вывод ядра с tty1 на serial0, чтобы на HDMI не было текстов
+  if grep -q 'console=tty1' "$CMDLINE_FILE"; then
+    sudo sed -i 's/console=tty1/console=serial0,115200/' "$CMDLINE_FILE"
+  fi
+
+  # 5.2. Гарантируем флаги для тихой загрузки и нормального сплэша
   if ! grep -q 'consoleblank=0' "$CMDLINE_FILE"; then
     sudo sed -i '1 s/$/ consoleblank=0/' "$CMDLINE_FILE"
   fi
 
-  # quiet splash + plymouth.ignore-serial-consoles + отключить мигающий курсор
+  if ! grep -q ' quiet' "$CMDLINE_FILE"; then
+    sudo sed -i '1 s/$/ quiet/' "$CMDLINE_FILE"
+  fi
+
+  if ! grep -q ' splash' "$CMDLINE_FILE"; then
+    sudo sed -i '1 s/$/ splash/' "$CMDLINE_FILE"
+  fi
+
   if ! grep -q 'plymouth.ignore-serial-consoles' "$CMDLINE_FILE"; then
-    sudo sed -i '1 s/$/ quiet splash plymouth.ignore-serial-consoles vt.global_cursor_default=0/' "$CMDLINE_FILE"
+    sudo sed -i '1 s/$/ plymouth.ignore-serial-consoles/' "$CMDLINE_FILE"
+  fi
+
+  if ! grep -q 'vt.global_cursor_default=0' "$CMDLINE_FILE"; then
+    sudo sed -i '1 s/$/ vt.global_cursor_default=0/' "$CMDLINE_FILE"
   fi
 fi
 
-# 6. (Опционально) override для KlipperScreen, если он есть в репозитории
+# 6. Убираем текстовый логин на tty1 — там будет только Plymouth и потом KS
+sudo systemctl disable --now getty@tty1.service || true
+
+# 7. (Опционально) override для KlipperScreen, если он есть в репозитории
 if [ -f "$REPO_DIR/loader/systemd/KlipperScreen.service.d/override.conf" ]; then
   sudo install -d -m 755 /etc/systemd/system/KlipperScreen.service.d
   sudo cp -a "$REPO_DIR/loader/systemd/KlipperScreen.service.d/override.conf" \
@@ -48,7 +67,7 @@ if [ -f "$REPO_DIR/loader/systemd/KlipperScreen.service.d/override.conf" ]; then
   sudo systemctl daemon-reload
 fi
 
-# 7. Тема для Mainsail (.theme)
+# 8. Тема для Mainsail (.theme)
 sudo install -d -m 755 /home/pi/printer_data/config/.theme
 sudo rsync -a --delete "$REPO_DIR/mainsail/.theme/" /home/pi/printer_data/config/.theme/
 sudo chown -R pi:$(id -gn pi) /home/pi/printer_data/config/.theme
