@@ -26,7 +26,9 @@ dtparam=spi=on
 EOC
 grep -q 'consoleblank=0' /boot/cmdline.txt || sed -i '1 s/$/ consoleblank=0/' /boot/cmdline.txt
 apt-get -y install git unzip dfu-util screen python3-gi python3-gi-cairo libgtk-3-0 xserver-xorg x11-xserver-utils xinit openbox python3-numpy python3-scipy python3-matplotlib i2c-tools python3-venv rsync
-usermod -aG dialout,tty,video,input,render,plugdev,gpio,i2c,spi pi
+for grp in dialout tty video input render plugdev gpio i2c spi; do
+getent group "$grp" >/dev/null 2>&1 && usermod -aG "$grp" pi || true
+done
 cd /home/pi
 [ -d KlipperScreen ] && rm -rf KlipperScreen
 git clone https://github.com/jordanruthe/KlipperScreen.git
