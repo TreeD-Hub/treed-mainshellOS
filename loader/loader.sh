@@ -1,29 +1,28 @@
 #!/bin/bash
-# TreeD loader: Plymouth + тихая загрузка + темы Mainsail + автообновление Moonraker
-# Идемпотентный, безопасен к повторному запуску.
 set -euo pipefail
 trap 'echo "[loader] error on line $LINENO"; exit 1' ERR
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PI_USER="pi"
 THEME_DIR="/usr/share/plymouth/themes/treed"
-CFG_TXT="/boot/firmware/config.txt"
 CMDLINE_FILE="/boot/firmware/cmdline.txt"
 
 sudo apt-get update
 sudo apt-get -y install plymouth plymouth-themes rsync
 
-sudo install -d -m 755 "$THEME_DIR"
-sudo cp -a "$REPO_DIR/loader/plymouth/treed/"* "$THEME_DIR"/
-sudo chown root:root "$THEME_DIR"/*
-sudo chmod 0644 "$THEME_DIR"/*
+if [ -d "$REPO_DIR/loader/plymouth/treed" ]; then
+  sudo install -d -m 755 "$THEME_DIR"
+  sudo cp -a "$REPO_DIR/loader/plymouth/treed/"* "$THEME_DIR"/
+  sudo chown root:root "$THEME_DIR"/* || true
+  sudo chmod 0644 "$THEME_DIR"/* || true
+fi
 
 if command -v plymouth-set-default-theme >/dev/null 2>&1; then
-  sudo plymouth-set-default-theme -R treed || sudo plymouth-set-default-theme treed
+  sudo plymouth-set-default-theme -R treed || sudo plymouth-set-default-theme treed || true
 fi
 
 if command -v raspi-config >/dev/null 2>&1; then
-  sudo raspi-config nonint do_boot_splash 0
+  sudo raspi-config nonint do_boot_splash 0 || true
 fi
 
 if [ -f "$CMDLINE_FILE" ]; then
@@ -46,15 +45,17 @@ if [ -f "$REPO_DIR/loader/systemd/KlipperScreen.service.d/override.conf" ]; then
 fi
 
 sudo install -d -m 755 /home/pi/printer_data/config/.theme
-sudo rsync -a --delete "$REPO_DIR/mainsail/.theme/" /home/pi/printer_data/config/.theme/ || true
-sudo chown -R "$PI_USER":"$(id -gn $PI_USER)" /home/pi/printer_data/config/.theme
+if [ -d "$REPO_DIR/mainsail/.theme" ]; then
+  sudo rsync -a --delete "$REPO_DIR/mainsail/.theme/" /home/pi/printer_data/config/.theme/ || true
+fi
+sudo chown -R "$PI_USER":"$(id -gn "$PI_USER")" /home/pi/printer_data/config/.theme || true
 
 if ! command -v curl >/dev/null 2>&1; then
   sudo apt-get -y install curl
 fi
 
 for i in {1..60}; do
-  if curl -fsS http://127.0.0.1:7125/server/info >/dev/null; then
+  if curl -fsS http://127.0.0.1:7125/server/info >/dev/null 2>&1; then
     break
   fi
   sleep 2
