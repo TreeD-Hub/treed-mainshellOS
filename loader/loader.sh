@@ -23,6 +23,11 @@ THEME_CONFIG_DIR="${KLIPPER_CONFIG_DIR}/.theme"
 
 export DEBIAN_FRONTEND=noninteractive
 
+if [ -L "${KLIPPER_CONFIG_DIR}" ]; then
+  sudo rm -f "${KLIPPER_CONFIG_DIR}"
+fi
+sudo install -d -m 755 "${KLIPPER_CONFIG_DIR}"
+
 # Fix: If cloned to staging or elsewhere, copy to standard location and re-exec
 if [ "$REPO_DIR" != "${TREED_MAINSHELLOS_DIR}" ]; then
   sudo mkdir -p "${TREED_MAINSHELLOS_DIR}"
