@@ -87,7 +87,7 @@ if [ -d "$REPO_DIR/loader/run.d" ]; then
   done
 fi
 
-# Moonraker conf: prefer repo, fallback if none
+# Moonraker conf: backup, prefer repo, fallback if none
 MOONRAKER_CONF_SOURCE="${REPO_DIR}/moonraker/moonraker.conf"
 MOONRAKER_CONF_TARGET="${KLIPPER_CONFIG_DIR}/moonraker.conf"
 sudo install -d -m 755 "${KLIPPER_CONFIG_DIR}"
@@ -118,6 +118,8 @@ EOF
 fi
 
 chown "${PI_USER}":"$(id -gn "${PI_USER}")" "${MOONRAKER_CONF_TARGET}" || true
+
+sudo systemctl restart moonraker.service || true
 
 if command -v curl >/dev/null 2>&1; then
   for i in $(seq 1 30); do
@@ -164,9 +166,7 @@ fi
 
 "${REPO_DIR}/loader/klipper-config.sh" || true
 
-if command -v systemctl >/dev/null 2>&1; then
-  sudo systemctl restart moonraker.service klipper.service || true
-fi
+sudo systemctl restart klipper.service || true
 
 echo "[loader] Installation complete. Rebooting in 5 seconds..."
 sleep 5
