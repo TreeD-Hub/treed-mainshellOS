@@ -75,7 +75,12 @@ if [ -d "$REPO_DIR/mainsail/.theme" ]; then
 fi
 sudo chown -R "$PI_USER":"$(id -gn "$PI_USER")" "${THEME_CONFIG_DIR}" || true
 
-# Hardening run.d (journald→RAM, fstab, fsck, watchdog, zram и т.п.)
+
+export REPO_DIR
+export TREED_ROOT="${PI_HOME}/treed"
+sudo mkdir -p "${TREED_ROOT}/state"
+sudo chown -R "$PI_USER":"$(id -gn "$PI_USER")" "${TREED_ROOT}/state" || true
+
 if [ -d "$REPO_DIR/loader/run.d" ]; then
   find "$REPO_DIR/loader/run.d" -type f -name '*.sh' -exec chmod +x {} \;
   for s in "$REPO_DIR"/loader/run.d/*.sh; do
