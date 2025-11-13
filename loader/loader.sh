@@ -23,6 +23,7 @@ THEME_CONFIG_DIR="${KLIPPER_CONFIG_DIR}/.theme"
 
 export DEBIAN_FRONTEND=noninteractive
 
+# ensure KLIPPER_CONFIG_DIR is a real directory (not a symlink)
 if [ -L "${KLIPPER_CONFIG_DIR}" ]; then
   sudo rm -f "${KLIPPER_CONFIG_DIR}"
 fi
