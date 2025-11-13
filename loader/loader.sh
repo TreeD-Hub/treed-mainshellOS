@@ -10,6 +10,18 @@ if [ -z "${PI_HOME}" ] || [ ! -d "${PI_HOME}" ]; then
   exit 1
 fi
 
+TREED_ROOT="${PI_HOME}/treed"
+TREED_MAINSHELLOS_DIR="${TREED_ROOT}/treed-mainshellOS"
+
+# Fix: If cloned to staging or elsewhere, copy to standard location and re-exec
+if [ "$REPO_DIR" != "${TREED_MAINSHELLOS_DIR}" ]; then
+  sudo mkdir -p "${TREED_MAINSHELLOS_DIR}"
+  sudo rsync -a --delete "$REPO_DIR/" "${TREED_MAINSHELLOS_DIR}/" || true
+  sudo chown -R "$PI_USER":"$(id -gn "$PI_USER")" "${TREED_MAINSHELLOS_DIR}" || true
+  cd "${TREED_MAINSHELLOS_DIR}/loader"
+  exec ./loader.sh
+fi
+
 THEME_DIR="/usr/share/plymouth/themes/treed"
 CMDLINE_FILE="/boot/firmware/cmdline.txt"
 MOONRAKER_URL="http://127.0.0.1:7125"
@@ -107,9 +119,6 @@ if command -v curl >/dev/null 2>&1; then
        "${MOONRAKER_URL}/jsonrpc" || true
 fi
 
-TREED_ROOT="${PI_HOME}/treed"
-TREED_MAINSHELLOS_DIR="${TREED_ROOT}/treed-mainshellOS"
-
 TREED_KLIPPER_SOURCE="${TREED_MAINSHELLOS_DIR}/klipper"
 TREED_KLIPPER_TARGET="${TREED_ROOT}/klipper"
 TREED_KLIPPER_SWITCH="${TREED_KLIPPER_TARGET}/switch_profile.sh"
@@ -136,7 +145,6 @@ if [ -x "${TREED_KLIPPER_SWITCH}" ]; then
   "${TREED_KLIPPER_SWITCH}" rn12_hbot_v1 || true
 fi
 
-chmod +x "${REPO_DIR}/loader/klipper-config.sh" || true
 "${REPO_DIR}/loader/klipper-config.sh" || true
 
 echo "[loader] Installation complete. Rebooting in 5 seconds..."
