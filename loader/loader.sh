@@ -3,7 +3,7 @@ set -euo pipefail
 trap 'echo "[loader] error on line $LINENO"; exit 1' ERR
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-PI_USER="pi"
+PI_USER="${PI_USER:-$(id -un)}"
 THEME_DIR="/usr/share/plymouth/themes/treed"
 CMDLINE_FILE="/boot/firmware/cmdline.txt"
 MOONRAKER_URL="http://127.0.0.1:7125"
