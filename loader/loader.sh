@@ -63,6 +63,14 @@ if [ -d "$REPO_DIR/mainsail/.theme" ]; then
 fi
 sudo chown -R "$PI_USER":"$(id -gn "$PI_USER")" "${THEME_CONFIG_DIR}" || true
 
+# Hardening run.d (journald→RAM, fstab, fsck, watchdog, zram и т.п.)
+if [ -d "$REPO_DIR/loader/run.d" ]; then
+  find "$REPO_DIR/loader/run.d" -type f -name '*.sh' -exec chmod +x {} \;
+  for s in "$REPO_DIR"/loader/run.d/*.sh; do
+    bash "$s"
+  done
+fi
+
 MOONRAKER_CONF_SOURCE="${REPO_DIR}/moonraker/moonraker.conf"
 MOONRAKER_CONF_TARGET="${KLIPPER_CONFIG_DIR}/moonraker.conf"
 
@@ -128,8 +136,8 @@ if [ -x "${TREED_KLIPPER_SWITCH}" ]; then
   "${TREED_KLIPPER_SWITCH}" rn12_hbot_v1 || true
 fi
 
-# Исправленный путь до klipper-config.sh
-"${REPO_DIR}/loader/klipper-config.sh"
+chmod +x "${REPO_DIR}/loader/klipper-config.sh" || true
+"${REPO_DIR}/loader/klipper-config.sh" || true
 
 echo "[loader] Installation complete. Rebooting in 5 seconds..."
 sleep 5

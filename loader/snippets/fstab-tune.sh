@@ -1,5 +1,22 @@
 set -euo pipefail
-sudo sed -i -E 's#^(/dev/mmcblk0p2[[:space:]]+/[[:space:]]+ext4[[:space:]]+)([^[:space:]]+)#\1\2,noatime,commit=600#g' /etc/fstab
-sudo sed -i -E 's#^(/dev/mmcblk0p1[[:space:]]+/boot[[:space:]]+vfat[[:space:]]+)([^[:space:]]+)#\1\2,noatime#g' /etc/fstab
+sudo awk '
+$2=="/" && $3=="ext4" {
+  opts=$4
+  if (opts !~ /(^|,)noatime(,|$)/) opts=opts ",noatime"
+  if (opts !~ /(^|,)commit=600(,|$)/) opts=opts ",commit=600"
+  $4=opts
+}
+$2=="/boot" || $2=="/boot/firmware" {
+  opts=$4
+  if (opts !~ /(^|,)noatime(,|$)/) opts=opts ",noatime"
+  $4=opts
+}
+{print}
+' OFS="\t" /etc/fstab | sudo tee /etc/fstab.new >/dev/null
+sudo mv /etc/fstab.new /etc/fstab
 sudo mount -o remount,commit=600,noatime /
-sudo mount -o remount,noatime /boot
+if mount | grep -q " on /boot/firmware "; then
+  sudo mount -o remount,noatime /boot/firmware
+elif mount | grep -q " on /boot "; then
+  sudo mount -o remount,noatime /boot
+fi
