@@ -1,1 +1,0 @@
-console=tty1 root=PARTUUID=6f8ec84e-02 rootfstype=ext4 fsck.repair=yes rootwait cfg80211.ieee80211_regdom=RU quiet splash loglevel=3 vt.global_cursor_default=0 plymouth.ignore-serial-consoles logo.nologo
