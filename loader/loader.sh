@@ -20,7 +20,6 @@ else
 fi
 
 CMDLINE_FILE="${BOOT_DIR}/cmdline.txt"
-CONFIG_TXT="${BOOT_DIR}/config.txt"
 
 PRINTER_DATA_DIR="${PI_HOME}/printer_data"
 KLIPPER_DST="${PI_HOME}/treed/klipper"
@@ -39,7 +38,7 @@ fi
 
 echo "[loader] deploying plymouth theme"
 sudo mkdir -p /usr/share/plymouth/themes/treed
-sudo rsync -a --no-owner --no-group "${THEME_SRC}/" /usr/share/plymouth/themes/treed/
+sudo rsync -a --no-owner --no-group --no-times "${THEME_SRC}/" /usr/share/plymouth/themes/treed/
 
 if command -v plymouth-set-default-theme >/dev/null 2>&1; then
   sudo plymouth-set-default-theme treed
@@ -111,7 +110,7 @@ echo "[loader] deploying Mainsail .theme (if present)"
 if [ -d "${MAINTAIL_THEME_SRC}" ]; then
   sudo -u "${PI_USER}" mkdir -p "${PRINTER_DATA_DIR}/config"
   sudo mkdir -p "${MAINTAIL_THEME_DST}"
-  sudo rsync -a --no-owner --no-group --delete "${MAINTAIL_THEME_SRC}/" "${MAINTAIL_THEME_DST}/"
+  sudo rsync -a --no-owner --no-group --no-times --delete "${MAINTAIL_THEME_SRC}/" "${MAINTAIL_THEME_DST}/"
 else
   echo "[loader] WARNING: mainsail/.theme not found in repo" >&2
 fi
@@ -119,7 +118,7 @@ fi
 echo "[loader] deploying Klipper configs (if present)"
 if [ -d "${REPO_DIR}/klipper" ]; then
   sudo -u "${PI_USER}" mkdir -p "$(dirname "${KLIPPER_DST}")"
-  rsync -a --no-owner --no-group --delete "${REPO_DIR}/klipper/" "${KLIPPER_DST}/"
+  rsync -a --no-owner --no-group --no-times --delete "${REPO_DIR}/klipper/" "${KLIPPER_DST}/"
 fi
 
 PRINTER_CFG="${PRINTER_DATA_DIR}/config/printer.cfg"
@@ -138,6 +137,18 @@ fi
 if [ -x "${KLIPPER_DST}/switch_profile.sh" ]; then
   echo "[loader] running switch_profile.sh rn12_hbot_v1"
   (cd "${KLIPPER_DST}" && ./switch_profile.sh rn12_hbot_v1) || true
+fi
+
+if [ -x "${REPO_DIR}/loader/klipper-config.sh" ]; then
+  echo "[loader] running klipper-config.sh"
+  "${REPO_DIR}/loader/klipper-config.sh" || true
+else
+  echo "[loader] WARNING: loader/klipper-config.sh not found or not executable" >&2
+fi
+
+if command -v systemctl >/dev/null 2>&1; then
+  echo "[loader] restarting klipper service"
+  sudo systemctl restart klipper.service || true
 fi
 
 echo "[loader] done"
