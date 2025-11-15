@@ -39,7 +39,7 @@ fi
 
 echo "[loader] deploying plymouth theme"
 sudo mkdir -p /usr/share/plymouth/themes/treed
-sudo rsync -a "${THEME_SRC}/" /usr/share/plymouth/themes/treed/
+sudo rsync -a --no-owner --no-group "${THEME_SRC}/" /usr/share/plymouth/themes/treed/
 
 if command -v plymouth-set-default-theme >/dev/null 2>&1; then
   sudo plymouth-set-default-theme treed
@@ -56,27 +56,6 @@ fi
 if command -v update-initramfs >/dev/null 2>&1; then
   echo "[loader] updating initramfs"
   sudo update-initramfs -u
-fi
-
-INITRAMFS=""
-if ls "${BOOT_DIR}"/initrd.img-* >/dev/null 2>&1; then
-  KVER="$(uname -r)"
-  if [ -f "${BOOT_DIR}/initrd.img-${KVER}" ]; then
-    INITRAMFS="initrd.img-${KVER}"
-  else
-    INITRAMFS="$(basename "$(ls -1 "${BOOT_DIR}"/initrd.img-* | head -n 1)")"
-  fi
-fi
-
-if [ -n "${INITRAMFS}" ]; then
-  echo "[loader] ensuring initramfs in config.txt (${INITRAMFS})"
-  if [ ! -f "${CONFIG_TXT}" ]; then
-    sudo touch "${CONFIG_TXT}"
-  fi
-  sudo sed -i '/^initramfs /d' "${CONFIG_TXT}"
-  echo "initramfs ${INITRAMFS} followkernel" | sudo tee -a "${CONFIG_TXT}" >/dev/null
-else
-  echo "[loader] WARNING: initramfs not found in ${BOOT_DIR}, Plymouth may start late" >&2
 fi
 
 if [ -f "${CMDLINE_FILE}" ]; then
@@ -132,7 +111,7 @@ echo "[loader] deploying Mainsail .theme (if present)"
 if [ -d "${MAINTAIL_THEME_SRC}" ]; then
   sudo -u "${PI_USER}" mkdir -p "${PRINTER_DATA_DIR}/config"
   sudo mkdir -p "${MAINTAIL_THEME_DST}"
-  sudo rsync -a --delete "${MAINTAIL_THEME_SRC}/" "${MAINTAIL_THEME_DST}/"
+  sudo rsync -a --no-owner --no-group --delete "${MAINTAIL_THEME_SRC}/" "${MAINTAIL_THEME_DST}/"
 else
   echo "[loader] WARNING: mainsail/.theme not found in repo" >&2
 fi
@@ -140,7 +119,7 @@ fi
 echo "[loader] deploying Klipper configs (if present)"
 if [ -d "${REPO_DIR}/klipper" ]; then
   sudo -u "${PI_USER}" mkdir -p "$(dirname "${KLIPPER_DST}")"
-  rsync -a --delete "${REPO_DIR}/klipper/" "${KLIPPER_DST}/"
+  rsync -a --no-owner --no-group --delete "${REPO_DIR}/klipper/" "${KLIPPER_DST}/"
 fi
 
 PRINTER_CFG="${PRINTER_DATA_DIR}/config/printer.cfg"
