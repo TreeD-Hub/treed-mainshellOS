@@ -38,8 +38,6 @@ STEPS=(
   "verify"
 )
 
-
-
 log_info "TreeD loader starting"
 log_info "REPO_DIR=${REPO_DIR}, PI_USER=${PI_USER}, PI_HOME=${PI_HOME}"
 
@@ -48,13 +46,21 @@ for step in "${STEPS[@]}"; do
   script="${REPO_DIR}/loader/steps/${step}.sh"
   if [ -x "$script" ]; then
     log_info "Running step: ${step}"
-    "$script"
+    env -i \
+      REPO_DIR="$REPO_DIR" \
+      PI_USER="$PI_USER" \
+      PI_HOME="$PI_HOME" \
+      BOOT_DIR="${BOOT_DIR:-}" \
+      CMDLINE_FILE="${CMDLINE_FILE:-}" \
+      CONFIG_FILE="${CONFIG_FILE:-}" \
+      bash "$script"
   elif [ -f "$script" ]; then
     log_info "Running step: ${step}"
-    bash "$script"
-  else
-    log_warn "Step script not found: ${script} (skipping)"
-  fi
-done
-
-log_info "TreeD loader finished successfully"
+    env -i \
+      REPO_DIR="$REPO_DIR" \
+      PI_USER="$PI_USER" \
+      PI_HOME="$PI_HOME" \
+      BOOT_DIR="${BOOT_DIR:-}" \
+      CMDLINE_FILE="${CMDLINE_FILE:-}" \
+      CONFIG_FILE="${CONFIG_FILE:-}" \
+      bash "$script"
