@@ -6,6 +6,10 @@ set -euo pipefail
 
 log_info "Step boot-hdmi-config: configuring HDMI output for 960x544 display"
 
+BOOT_DIR="$(detect_boot_dir)"
+CONFIG_FILE="$(detect_config_file "${BOOT_DIR}")"
+
+ensure_root
 backup_file_once "${CONFIG_FILE}"
 
 if grep -q 'hdmi_cvt=960 544 60' "${CONFIG_FILE}" 2>/dev/null; then
@@ -17,6 +21,7 @@ hdmi_mode=87
 hdmi_cvt=960 544 60 6 0 0 0
 hdmi_drive=2
 disable_overscan=1
+disable_splash=1
 dtparam=i2c_arm=on
 dtparam=spi=on
 EOC
