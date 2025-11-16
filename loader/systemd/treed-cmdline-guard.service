@@ -1,8 +1,0 @@
-[Unit]
-Description=TreeD cmdline guard (enforce expected /boot cmdline)
-RequiresMountsFor=/boot /boot/firmware
-After=local-fs.target
-
-[Service]
-Type=oneshot
-ExecStart=/home/pi/treed/scripts/cmdline-guard.sh guard
