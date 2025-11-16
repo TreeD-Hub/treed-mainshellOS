@@ -22,20 +22,21 @@ export PI_HOME
 trap 'log_error "Error in step: ${CURRENT_STEP:-unknown}"; exit 1' ERR
 
 STEPS=(
-  "check-env"
+  "env-prepare"
+  "cleanup-system"
   "detect-rpi"
-  "packages-core"
+  "apt-packages"
   "boot-hdmi-config"
-  "plymouth-theme-install"
-  "plymouth-initramfs"
+  "plymouth-install"
   "plymouth-cmdline"
+  "plymouth-initramfs"
   "plymouth-systemd"
-  "klipper-core"
-  "klipper-profiles"
-  "klipper-mainsail-theme"
+  "klipper-prepare"
+  "klipper-config"
   "klipperscreen-integr"
-  "verify"
+  "final-verify"
 )
+
 
 log_info "TreeD loader starting"
 log_info "REPO_DIR=${REPO_DIR}, PI_USER=${PI_USER}, PI_HOME=${PI_HOME}"
