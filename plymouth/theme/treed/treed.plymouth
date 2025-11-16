@@ -1,6 +1,6 @@
 [Plymouth Theme]
-Name=TreeD
-Description=TreeD splash with logo and progress bar
+Name=treed
+Description=TreeD boot splash
 ModuleName=script
 
 [script]
