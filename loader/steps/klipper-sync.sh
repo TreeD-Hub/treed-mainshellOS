@@ -20,6 +20,6 @@ mkdir -p "${KLIPPER_TARGET_DIR}"
 
 cp -a "${KLIPPER_SOURCE_DIR}/." "${KLIPPER_TARGET_DIR}/"
 
-chown -R "${PI_USER}:${PI_USER}" "${KLIPPER_TARGETDIR:-${KLIPPER_TARGET_DIR}}"
+chown -R "${PI_USER}:${PI_USER}" "${KLIPPER_TARGET_DIR}"
 
 log_info "klipper-sync: synced ${KLIPPER_SOURCE_DIR} -> ${KLIPPER_TARGET_DIR}"
