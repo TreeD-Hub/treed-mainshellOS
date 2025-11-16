@@ -39,6 +39,7 @@ STEPS=(
   "klipper-sync"
   "klipper-core"
   "klipper-profiles"
+  "klipper-anti-shutdown"
   "klipper-mainsail-theme"
   "klipperscreen-integr"
 )

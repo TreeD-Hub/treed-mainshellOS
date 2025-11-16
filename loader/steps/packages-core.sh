@@ -8,6 +8,8 @@ log_info "Step packages-core: installing core packages"
 export DEBIAN_FRONTEND=noninteractive
 
 apt-get update
+apt-get update -y
+apt-get install -y plymouth plymouth-themes rsync curl socat
 
 ensure_package plymouth
 ensure_package plymouth-themes
