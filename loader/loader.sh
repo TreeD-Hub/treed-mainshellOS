@@ -45,7 +45,6 @@ STEPS=(
   "klipperscreen-integr"
 )
 
-
 log_info "TreeD loader starting"
 log_info "REPO_DIR=${REPO_DIR}, PI_USER=${PI_USER}, PI_HOME=${PI_HOME}, CMDLINE_FILE=${CMDLINE_FILE}"
 
