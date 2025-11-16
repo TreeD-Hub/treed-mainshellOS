@@ -42,7 +42,7 @@ STEPS=(
   "klipper-anti-shutdown"
   "moonraker-config"
   "klipper-mainsail-theme"
-  "klipperscreen-install"
+  #"klipperscreen-install"
   "klipperscreen-integr"
 )
 
