@@ -35,7 +35,6 @@ STEPS=(
   "klipper-profiles"
   "klipper-mainsail-theme"
   "klipperscreen-integr"
-  "verify"
 )
 
 log_info "TreeD loader starting"
