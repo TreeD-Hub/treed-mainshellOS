@@ -19,11 +19,13 @@ backup_file_once "${CMDLINE_FILE}"
 line="$(tr -d '\n' < "${CMDLINE_FILE}" || true)"
 
 if [ -z "${line}" ]; then
-  line="$(cat /proc/cmdline || echo "")"
-  if [ -z "${line}" ]; then
-    log_error "cannot determine base cmdline from /proc/cmdline"
+  base="$(cat /proc/cmdline || true)"
+  if [ -z "${base}" ]; then
+    log_error "both ${CMDLINE_FILE} and /proc/cmdline are empty; cannot construct cmdline"
     exit 1
   fi
+  line="${base}"
+  log_info "cmdline file was empty; using /proc/cmdline as base"
 fi
 
 line="$(printf '%s\n' "${line}" | sed -E 's/(^| )plymouth\.enable=0( |$)/ /g' | tr -s ' ')"
@@ -34,7 +36,9 @@ for tok in quiet splash plymouth.ignore-serial-consoles logo.nologo vt.global_cu
   fi
 done
 
+line="$(printf '%s\n' "${line}" | sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//' )"
+
 printf '%s\n' "${line}" > "${CMDLINE_FILE}"
 
-log_info "Updated ${CMDLINE_FILE} with plymouth cmdline parameters"
+log_info "Updated ${CMDLINE_FILE} for plymouth"
 log_info "plymouth-cmdline: OK"
