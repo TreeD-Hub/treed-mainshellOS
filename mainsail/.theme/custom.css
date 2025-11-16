@@ -1,0 +1,327 @@
+/* ==========================================================================
+   Mainsail (Vuetify v2) — кастомная тема
+   Подсказки:
+   • --v-*-base — vuetify-переменные цветов темы (info/warning/error и т.д.)
+   • Остальные --p-* — твои собственные токены (фон, бордеры, текст, акцент)
+   • .theme--dark / .theme--light — корневые селекторы текущей темы Vuetify
+   • !important часто нужен, т.к. Vuetify генерирует специфичные стили
+   ========================================================================== */
+
+:root .theme--dark {
+    /* Базовые цвета Vuetify для уведомлений/состояний */
+    --v-info-base: #9163FF;       /* цвет "информирования" (чипы, бэйджи, иконки) */
+    --v-warning-base: #9163FF;    /* цвет "предупреждения" (ховеры/активные элементы меню) */
+    --v-error-base: #cb2c2c;      /* цвет ошибок (алерты, валидация) */
+
+    /* Твоя палитра: фон и границы в тёмной теме */
+    --p-background-dark: #1c1e20;   /* основной фон страниц/контейнеров */
+    --p-background-darker: #18191a; /* фон панелей, дропдаунов, тулбаров */
+    --p-border: #3f4143;            /* цвет контуров/рамок/инпутов */
+    --p-accent-yellow: #d8ae47;      /* зелёный акцент (успех, статусы, бордеры) */
+
+    /* Цвета текста в тёмной теме */
+    --p-text-color: rgb(224, 224, 224); /* основной текст */
+    --p-text-color2: #b3b3b3;           /* вторичный/приглушённый текст */
+    --p-text-color3: black;             /* инвертируемый текст на ярких кнопках (warning) */
+}
+
+:root .theme--light {
+    /* Базовые цвета Vuetify (светлая тема) */
+    --v-info-base: #9163FF;
+    --v-warning-base: #9163FF;
+    --v-error-base: #cb2c2c;
+
+    /* Палитра: фон и границы в светлой теме */
+    --p-background-dark: #fdfdfd;   /* общий фон контента (светлый) */
+    --p-background-darker: #f5f5f5; /* фон панелей, тулбаров, дропдаунов */
+    --p-border: #e0e0e0;            /* бордеры/разделители */
+    --p-accent-yellow: #d8ae47;      /* зелёный акцент (успех) */
+
+    /* Цвета текста в светлой теме */
+    --p-text-color: rgb(42, 42, 42);   /* основной текст */
+    --p-text-color2: rgb(128, 128, 128); /* вторичный текст/плейсхолдеры */
+    --p-text-color3: white;            /* инвертируемый текст для ярких кнопок (warning) */
+}
+
+/* Глобальная типографика приложений Vuetify */
+.v-application,
+.v-application .text-body-2 {
+    font-family: Inter/Roboto !important; /* подсказка: лучше "Inter, Roboto, system-ui, sans-serif" */
+}
+
+/* Шапка без тени */
+header.topbar {
+    box-shadow: none !important;
+}
+
+/* Базовый фон основной области */
+main#content {
+    background-color: var(--p-background-dark);
+}
+
+/* Цвет текста карточек/листов в обеих темах */
+.theme--light.v-sheet,
+.theme--dark.v-sheet {
+    color: var(--p-text-color);
+}
+
+/* Стили "disabled" и заголовков таблиц — приглушённый цвет */
+.v-data-table > .v-data-table__wrapper > table > thead > tr:last-child > th,
+.v-input--is-disabled,
+.v-input--is-disabled input,
+.v-input--is-disabled textarea,
+.theme--light.v-application .text--disabled,
+.theme--dark.v-application .text--disabled {
+    color: var(--p-text-color2) !important;
+}
+
+/* Активный пункт навигации в сайдбаре */
+.active-nav-item {
+    border-right: 0px !important;
+    background: var(--v-warning-base); /* подсветка активного пункта */
+}
+
+/* Цвета текста/иконок активного пункта и иконок по умолчанию */
+.active-nav-item .menu-item-title,
+.active-nav-item .menu-item-icon,
+.theme--light.v-icon,
+.theme--dark.v-icon,
+.theme--light.v-btn.v-btn--icon,
+.theme--dark.v-btn.v-btn--icon {
+    color: var(--p-text-color);
+}
+
+/* Ховер по пунктам меню (не активным) — подсветка цветом предупреждения */
+.v-item-group .v-list-item:not(.active-nav-item):hover .menu-item-title,
+.v-item-group .v-list-item:not(.active-nav-item):hover .v-icon {
+    color: var(--v-warning-base) !important;
+}
+
+/* Убираем стандартные псевдо-подсветки элементов списка */
+.v-list-item::before { opacity: 0 !important; }
+.v-list { background-color: inherit !important; }
+.v-list-item--active::before { opacity: 0 !important; }
+
+/* Усиление жирности для кнопок/тулбаров/сабхедеров */
+.v-btn,
+.v-toolbar__title,
+.subheading {
+    font-weight: bold;
+}
+
+/* Единый фон для верхней панели, кнопок в ней, дровера, диалогов, меню */
+.v-toolbar,
+.topbar .v-btn,
+.v-navigation-drawer,
+.v-dialog,
+.v-menu__content {
+    background-color: var(--p-background-darker) !important;
+}
+
+/* Чистый вид дровера — без бордера/изображения */
+.v-navigation-drawer__image,
+.v-navigation-drawer__border {
+    display: none;
+}
+
+/* Карточки/табы/таблички/инпуты — плоский вид без тени, фон наследуем */
+.panel-toolbar,
+.v-card,
+.v-tabs-bar,
+.v-tabs-items,
+.v-data-table,
+.v-input__slot {
+    background-color: inherit !important;
+    box-shadow: none !important;
+}
+
+/* Хард-ресет границ в отдельных блоках */
+hr,
+.filesJobqueue,
+.consoleTable.mini {
+    border: none !important;
+}
+
+/* Уменьшаем вертикальные паддинги в некоторых местах интерфейса */
+.v-application .py-2 { padding: 0 !important; }
+
+/* Цвета состояний "успех" — текст, бордеры и фон */
+.v-application .success--text, 
+.v-application .green--text {
+    color: var(--p-accent-yellow) !important;
+}
+.v-application .green {
+    border-color: var(--p-accent-yellow) !important;
+}
+.v-application .success {
+    background-color: var(--p-accent-yellow) !important;
+}
+
+/* Базовая форма кнопок/чипов: прямые углы, без тени, фон как у главного блока */
+.v-btn,
+.v-chip {
+    border-radius: 0px !important;
+    box-shadow: none !important;
+    background-color: var(--p-background-dark) !important;
+}
+
+/* Прямые углы у инпутов */
+.v-input__slot { border-radius: 0px !important; }
+
+/* Чипы в списке обновлений не "бледнеют" при disabled */
+.update-manager-list .v-chip--disabled { opacity: 1; }
+
+/* Карточки/всплывающие подсказки/меню — прямые углы, рамка вместо тени */
+.v-dialog,
+.v-sheet.v-card,
+.v-tooltip__content.menuable__content__active,
+.v-menu__content {
+    border-radius: 0 !important;
+    border: 1px solid var(--p-border);
+    box-shadow: none !important;
+}
+
+/* Стандартные внутренние отступы контейнера */
+.container { padding: 25px; }
+
+/* Отступы специфичных блоков */
+._filamentRunout-subheader { padding-bottom: 10px; }
+.webcamBackground { margin-bottom: 12px; }
+
+/* Уплотняем карточки макрогрупп */
+div[class*="macrogroup"] .v-card__text {
+    padding-bottom: 16px !important;
+}
+
+/* Цвет текста у дефолтных/primary кнопок (на тёмном фоне) */
+.v-btn:not(.v-btn--outlined).primary,
+.v-btn:not(.v-btn--round).v-size--default,
+.v-btn.primary {
+    color: var(--p-text-color);
+}
+
+/* Контрастный текст у warning-кнопок (обычно яркий фон) */
+.v-btn.warning { color: var(--p-text-color3) !important; }
+
+/* Цвет текста у пунктов списка по умолчанию */
+.theme--light.v-list-item:not(.v-list-item--active):not(.v-list-item--disabled),
+.theme--dark.v-list-item:not(.v-list-item--active):not(.v-list-item--disabled) {
+    color: var(--p-text-color) !important;
+}
+
+/* Делаем подписи меню полностью непрозрачными */
+.menu-item-title { opacity: 1 !important; }
+
+/* Тёмный фон консоли */
+.consoleScrollContainer { background-color: var(--p-background-darker); }
+
+/* Паддинги выпадающих меню; внутри карточки без внешней рамки */
+.v-menu__content { padding: 20px; }
+.v-menu__content .v-card { border: none !important; }
+
+/* Ховер по строкам таблиц и файлам — подсвечиваем текст, без заливки */
+tr:hover,
+.v-application .file-list-cursor.text--disabled:hover {
+    background: inherit !important;
+    color: var(--v-warning-base) !important;
+}
+
+/* Унификация внешнего вида мини-кнопок/групп */
+.btnMinWidthAuto,
+._btn-group .v-btn[data-v-9ea80ab7],
+._btn-group .v-btn[data-v-1b2327b2],
+._btn-extruder-cmd {
+    background-color: var(--p-background-dark) !important;
+    border: 1px solid var(--p-border) !important;
+    box-shadow: none !important;
+    color: var(--p-text-color) !important;
+}
+
+/* Активные item-кнопки — без бэкграунда, только акцентным цветом */
+.v-btn.v-item--active {
+    background-color: inherit !important;
+    color: var(--v-warning-base) !important;
+}
+.v-btn.v-item--active::before { opacity: 0 !important; }
+
+/* Глобальные стили primary/secondary кнопок (граница вместо заливки) */
+.v-application .v-btn.primary {
+    color: var(--p-text-color) !important;
+    background-color: var(--p-background-dark) !important;
+    border: 1px solid var(--p-border) !important;
+}
+.v-application .v-btn.secondary {
+    color: var(--p-text-color) !important;
+    background-color: var(--p-background-dark) !important;
+    border: 1px solid var(--p-text-color) !important;
+}
+
+/* Ховер-состояние для primary/secondary — только цвет текста */
+.v-application .v-btn.primary:hover,
+.v-application .v-btn.secondary:hover {
+    color: var(--v-warning-base) !important;
+}
+
+
+/* === Правки поверх Vuetify: ошибки и "акцентные" слова === */
+
+/* === Фиолетовый стиль для error-алертов (специфичные селекторы) === */
+
+/* токены (подправь оттенки при желании) */
+:root .theme--dark { --p-error-bg:#2a2540; --p-error-text:#efe9ff; --p-error-border:rgba(145,99,255,.35); --p-error-marker:#cb2c2c; }
+:root .theme--light{ --p-error-bg:#efe9ff; --p-error-text:#2b2144; --p-error-border:rgba(145,99,255,.45); --p-error-marker:#cb2c2c; }
+
+/* Ключ: .theme--dark.v-alert.error (класс темы на том же элементе) */
+.theme--dark.v-alert.error,
+.theme--dark.v-alert--error,
+.theme--light.v-alert.error,
+.theme--light.v-alert--error,
+.theme--dark .v-alert.theme--dark.error,   /* на всякий случай если вложено */
+.theme--light .v-alert.theme--light.error {
+  background-color: var(--p-error-bg) !important;
+  color: var(--p-error-text) !important;
+  border: 1px solid var(--p-error-border) !important;
+  border-left: 4px solid var(--p-error-marker) !important;
+}
+
+/* Иконка и заголовок внутри */
+.theme--dark.v-alert.error .v-icon,
+.theme--dark.v-alert--error .v-icon,
+.theme--light.v-alert.error .v-icon,
+.theme--light.v-alert--error .v-icon,
+.theme--dark.v-alert.error .v-alert__icon,
+.theme--light.v-alert.error .v-alert__icon {
+  color: var(--p-error-marker) !important;
+}
+
+/* Ссылки/псевдо-акценты внутри ошибки — не синие */
+.theme--dark.v-alert.error a,
+.theme--dark.v-alert.error .primary--text,
+.theme--dark.v-alert.error .accent--text,
+.theme--dark.v-alert.error .info--text,
+.theme--light.v-alert.error a,
+.theme--light.v-alert.error .primary--text,
+.theme--light.v-alert.error .accent--text,
+.theme--light.v-alert.error .info--text {
+  color: var(--p-error-text) !important;
+  text-decoration-color: currentColor !important;
+}
+
+/* Кнопки внутри карточки-алерта (если есть) */
+.theme--dark.v-alert.error .v-btn,
+.theme--light.v-alert.error .v-btn {
+  border-color: var(--p-error-border) !important;
+  color: var(--p-error-text) !important;
+  background-color: transparent !important;
+}
+
+
+/* 2) Унифицируем "акцентный" цвет текста (ссылки, .primary--text, .accent--text, .info--text) */
+.theme--dark a,
+.theme--dark .primary--text,
+.theme--dark .accent--text,
+.theme--dark .info--text {
+  color: var(--v-warning-base) !important;  /* ← или поставь var(--p-accent-yellow) */
+  text-decoration-color: currentColor !important;
+}
+

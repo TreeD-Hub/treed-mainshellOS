@@ -1,0 +1,8 @@
+[Plymouth Theme]
+Name=TreeD
+Description=TreeD splash with logo and progress bar
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/treed
+ScriptFile=/usr/share/plymouth/themes/treed/treed.script
