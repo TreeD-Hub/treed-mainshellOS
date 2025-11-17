@@ -1,11 +1,11 @@
 ```bash
-cd /home/pi
-mkdir -p treed/.staging
-cd treed/.staging
+cd /home/pi/treed/.staging
 sudo rm -rf treed-mainshellOS
 git clone https://github.com/Yawllen/treed-mainshellOS treed-mainshellOS
 cd treed-mainshellOS
-chmod +x loader/loader.sh
-sudo ./loader/loader.sh
+sudo sed -i 's/\r$//' loader/loader.sh loader/lib/*.sh loader/steps/*.sh
+sudo chmod +x loader/loader.sh
+sudo bash loader/loader.sh
+sudo reboot
 ```
 
