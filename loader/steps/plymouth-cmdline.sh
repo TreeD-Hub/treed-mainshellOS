@@ -35,7 +35,7 @@ read -r -a tokens <<< "${current}"
 new_tokens=()
 for t in "${tokens[@]}"; do
   case "$t" in
-    quiet|splash|plymouth.ignore-serial-consoles|vt.global_cursor_default=*|consoleblank=*|loglevel=*|logo.nologo|console=*)
+    quiet|splash|plymouth.ignore-serial-consoles|vt.global_cursor_default=*|consoleblank=*|loglevel=*|logo.nologo|plymouth.debug|vt.handoff=*)
       ;;
     *)
       new_tokens+=("$t")
@@ -51,6 +51,7 @@ new_tokens+=(
   consoleblank=0
   loglevel=3
   logo.nologo
+  vt.handoff=7
 )
 
 new_line="${new_tokens[*]}"

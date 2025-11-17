@@ -11,7 +11,9 @@ if ! command -v plymouth-set-default-theme >/dev/null 2>&1; then
   exit 0
 fi
 
-log_info "plymouth-initramfs: applying theme '${PLYMOUTH_THEME_NAME}' and rebuilding initramfs"
+THEME="${PLYMOUTH_THEME_NAME:-treed}"
+export PLYMOUTH_THEME_NAME="${THEME}"
+log_info "plymouth-initramfs: applying theme '${THEME}' and rebuilding initramfs"
 
 plymouth_set_default_theme
 plymouth_rebuild_initramfs
@@ -20,7 +22,7 @@ initrd_src="/boot/initrd.img-$(uname -r)"
 initrd_dst="/boot/firmware/initrd.img-$(uname -r)"
 
 if [ -f "${initrd_src}" ]; then
-  cp "${initrd_src}" "${initrd_dst}"
+  cp -f "${initrd_src}" "${initrd_dst}"
   log_info "plymouth-initramfs: copied initrd to ${initrd_dst}"
 else
   log_error "plymouth-initramfs: initrd source not found: ${initrd_src}"

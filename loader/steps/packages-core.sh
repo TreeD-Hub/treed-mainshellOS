@@ -1,11 +1,9 @@
 #!/bin/bash
 set -euo pipefail
-
 . "${REPO_DIR}/loader/lib/common.sh"
 ensure_root
 
 log_info "Step packages-core: installing core packages"
-
 apt-get update
 apt-get -y install plymouth plymouth-themes plymouth-label rsync curl socat
 

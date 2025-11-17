@@ -16,13 +16,14 @@ for unit in getty@tty1.service; do
 done
 
 for unit in plymouth-quit.service plymouth-quit-wait.service; do
-  state="$(systemctl is-enabled "${unit}" 2>/dev/null || true)"
-  if [ "${state}" != "masked" ]; then
-    systemctl mask "${unit}" || true
-    log_info "Masked ${unit}"
-  else
-    log_info "${unit} already masked"
-  fi
+  systemctl unmask "${unit}" 2>/dev/null || true
 done
+
+if systemctl list-unit-files | grep -q '^treed-plymouth-late.service'; then
+  systemctl disable --now treed-plymouth-late.service 2>/dev/null || true
+  rm -f /etc/systemd/system/treed-plymouth-late.service
+fi
+
+systemctl daemon-reload
 
 log_info "plymouth-systemd: OK"
