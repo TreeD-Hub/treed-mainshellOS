@@ -34,6 +34,7 @@ STEPS=(
   "boot-hdmi-config"
   "plymouth-theme-install"
   "plymouth-initramfs"
+  "plymouth-initramfs-config"
   "plymouth-cmdline"
   "plymouth-systemd"
   "klipper-sync"
@@ -44,6 +45,7 @@ STEPS=(
   "klipper-mainsail-theme"
   #"klipperscreen-install"
   "klipperscreen-integr"
+  "verify"
 )
 
 

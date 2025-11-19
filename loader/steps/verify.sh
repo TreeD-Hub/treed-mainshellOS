@@ -19,13 +19,37 @@ failf() {
   fail=$((fail+1))
 }
 
+# Гарантируем BOOT_DIR / CMDLINE_FILE / CONFIG_FILE даже при ручном запуске
+if [ -z "${BOOT_DIR:-}" ]; then
+  BOOT_DIR="$(detect_boot_dir)"
+fi
+
+if [ -z "${CMDLINE_FILE:-}" ] || [ ! -f "${CMDLINE_FILE}" ]; then
+  CMDLINE_FILE="$(detect_cmdline_file "${BOOT_DIR}")"
+fi
+
+if [ -z "${CONFIG_FILE:-}" ] || [ ! -f "${CONFIG_FILE}" ]; then
+  CONFIG_FILE="$(detect_config_file "${BOOT_DIR}")"
+fi
+
 KVER="$(uname -r)"
 INITRD="${BOOT_DIR}/initrd.img-${KVER}"
 
 if [ -f "${INITRD}" ]; then
-  pass "initramfs file"
+  pass "initramfs file ${INITRD}"
 else
   failf "initramfs file (${INITRD} missing)"
+fi
+
+# Проверка строки initramfs в config.txt
+if [ -f "${CONFIG_FILE}" ]; then
+  if grep -qE "^initramfs[[:space:]]+initrd\.img-${KVER}" "${CONFIG_FILE}"; then
+    pass "config.txt initramfs initrd.img-${KVER}"
+  else
+    failf "config.txt initramfs initrd.img-${KVER}"
+  fi
+else
+  failf "config.txt (${CONFIG_FILE} missing)"
 fi
 
 CMDLINE_CONTENT="$(tr -d '\n' < "${CMDLINE_FILE}" 2>/dev/null || true)"
@@ -60,9 +84,9 @@ fi
 for unit in plymouth-quit.service plymouth-quit-wait.service; do
   s="$(systemctl is-enabled "${unit}" 2>/dev/null || true)"
   if [ "${s}" = "masked" ]; then
-    pass "${unit} masked"
+    failf "${unit} not masked (should be unmasked)"
   else
-    failf "${unit} masked"
+    pass "${unit} unmasked"
   fi
 done
 
