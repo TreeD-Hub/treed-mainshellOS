@@ -29,13 +29,43 @@ klipper_reset_config_dir() {
 
 klipper_ensure_printer_cfg() {
   local printer_cfg="${KLIPPER_CONFIG_DIR}/printer.cfg"
+  local src_cfg="${KLIPPER_BASE_DIR}/printer.cfg"
+  local local_overrides="${KLIPPER_CONFIG_DIR}/local_overrides.cfg"
+
+  if [ ! -f "${src_cfg}" ]; then
+    log_warn "Source printer.cfg template not found: ${src_cfg}"
+    return 0
+  fi
+
+  ensure_dir "${KLIPPER_CONFIG_DIR}"
   backup_file_once "${printer_cfg}"
-  cat > "${printer_cfg}" <<EOF
-[include ${KLIPPER_BASE_DIR}/printer_root.cfg]
-EOF
+
+  log_info "Writing printer.cfg from template ${src_cfg}"
+  cp -f "${src_cfg}" "${printer_cfg}"
   chown "${PI_USER}":"$(id -gn "${PI_USER}")" "${printer_cfg}" || true
-  log_info "Wrote printer.cfg to include TreeD printer_root.cfg"
+
+  if [ ! -f "${local_overrides}" ]; then
+    log_info "Creating initial local_overrides.cfg at ${local_overrides}"
+    cat > "${local_overrides}" <<'EOF'
+# Локальные оверрайды для этой конкретной Pi.
+# Файл не под Git и не перезаписывается loader'ом.
+# Примеры:
+#
+# [printer]
+# max_velocity: 220
+# max_accel: 4500
+#
+# [extruder]
+# pressure_advance: 0.05
+EOF
+    chown "${PI_USER}":"$(id -gn "${PI_USER}")" "${local_overrides}" || true
+  else
+    log_info "local_overrides.cfg already exists, keeping as is"
+  fi
+
+  log_info "printer.cfg and local_overrides.cfg are in place"
 }
+
 
 klipper_set_profile() {
   local profile="${1:-rn12_hbot_v1}"
