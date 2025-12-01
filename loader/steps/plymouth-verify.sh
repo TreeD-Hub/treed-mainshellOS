@@ -1,35 +1,38 @@
 #!/bin/bash
 set -euo pipefail
-
 . "${REPO_DIR}/loader/lib/common.sh"
 
-THEME_NAME="treed"
-THEME_DIR="/usr/share/plymouth/themes/${THEME_NAME}"
+THEME="treed"
 CMDLINE="/boot/firmware/cmdline.txt"
+CFG="/boot/firmware/config.txt"
+IR="/boot/firmware/initrd.img-$(uname -r)"
+IR8="/boot/firmware/initramfs8"
 
-log_info "plymouth-verify: enforce '${THEME_NAME}', initramfs, cmdline"
+log_info "plymouth-verify: enforce theme '${THEME}', initramfs8, cmdline"
 
-if [ ! -d "${THEME_DIR}" ]; then
-  log_error "plymouth-verify: theme not found: ${THEME_DIR}"
-  exit 1
-fi
-
-sudo plymouth-set-default-theme "${THEME_NAME}" -R
-
-if [ -f "${CMDLINE}" ]; then
-  CURRENT="$(cat "${CMDLINE}")"
-  [[ "${CURRENT}" == *"quiet"* ]] || CURRENT="${CURRENT} quiet"
-  [[ "${CURRENT}" == *"splash"* ]] || CURRENT="${CURRENT} splash"
-  [[ "${CURRENT}" == *"plymouth.ignore-serial-consoles"* ]] || CURRENT="${CURRENT} plymouth.ignore-serial-consoles"
-  printf "%s\n" "${CURRENT}" | sudo tee "${CMDLINE}" >/dev/null
-  sync
-else
-  log_warn "plymouth-verify: ${CMDLINE} not found"
-fi
-
-# Доп. страховка: если пакет/ядро обновились — пересоберём initramfs ещё раз
+sudo plymouth-set-default-theme "${THEME}" -R
 if command -v update-initramfs >/dev/null 2>&1; then
   sudo update-initramfs -u
 fi
+
+if [ -f "${IR}" ]; then
+  sudo cp -f "${IR}" "${IR8}"
+fi
+
+if [ -f "${CFG}" ]; then
+  sudo sed -i -E '/^initramfs /d' "${CFG}"
+  echo 'initramfs initramfs8 followkernel' | sudo tee -a "${CFG}" >/dev/null
+fi
+
+if [ -f "${CMDLINE}" ]; then
+  CUR="$(cat "${CMDLINE}")"
+  [[ "${CUR}" == *"quiet"* ]] || CUR="${CUR} quiet"
+  [[ "${CUR}" == *"splash"* ]] || CUR="${CUR} splash"
+  [[ "${CUR}" == *"plymouth.ignore-serial-consoles"* ]] || CUR="${CUR} plymouth.ignore-serial-consoles"
+  printf "%s\n" "${CUR}" | sudo tee "${CMDLINE}" >/dev/null
+fi
+
+sudo systemctl mask getty@tty1.service
+sudo systemctl enable plymouth-start.service plymouth-read-write.service plymouth-quit-wait.service plymouth-quit.service
 
 log_info "plymouth-verify: OK"
