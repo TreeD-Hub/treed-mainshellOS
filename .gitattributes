@@ -1,3 +1,7 @@
+# Default behavior
+* text=auto
+
+# Force LF for Linux/Pi critical text files
 *.sh      text eol=lf
 *.cfg     text eol=lf
 *.conf    text eol=lf
@@ -8,4 +12,16 @@
 *.yaml    text eol=lf
 *.yml     text eol=lf
 *.json    text eol=lf
-*.sh text eol=lf
+
+# Treat common binaries as binary (no EOL conversions)
+*.png     binary
+*.jpg     binary
+*.jpeg    binary
+*.gif     binary
+*.ico     binary
+*.pdf     binary
+*.zip     binary
+*.woff    binary
+*.woff2   binary
+*.ttf     binary
+*.otf     binary
