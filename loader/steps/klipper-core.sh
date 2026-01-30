@@ -13,6 +13,16 @@ if [ ! -d "${STAGE_DIR}" ]; then
   exit 1
 fi
 
+if [ ! -f "${STAGE_DIR}/printer.cfg" ] || [ ! -d "${STAGE_DIR}/profiles" ]; then
+  log_error "klipper-core: staging incomplete (missing printer.cfg or profiles): ${STAGE_DIR}"
+  exit 1
+fi
+
+if [ -z "$(find "${STAGE_DIR}/profiles" -mindepth 1 -print -quit 2>/dev/null)" ]; then
+  log_error "klipper-core: staging profiles directory is empty: ${STAGE_DIR}/profiles"
+  exit 1
+fi
+
 # Список файлов/конфигов, которые НЕ затираем при обновлении
 PRESERVE_LIST=(
   "local_overrides.cfg"

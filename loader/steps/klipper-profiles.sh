@@ -11,6 +11,11 @@ MCU_CFG="${PROFILE_DIR}/mcu_rn12.cfg"
 
 log_info "Step klipper-profiles: switching to profile ${PROFILE_NAME} and updating serial"
 
+if [ ! -d "${KLIPPER_DIR}" ] || [ ! -f "${KLIPPER_DIR}/printer.cfg" ] || [ ! -d "${PROFILES_DIR}" ]; then
+  log_error "klipper-profiles: staging missing or incomplete: ${KLIPPER_DIR}"
+  exit 1
+fi
+
 mkdir -p "${PROFILES_DIR}"
 
 SERIAL_PATH="$(ls /dev/serial/by-id/* 2>/dev/null | head -n 1 || true)"

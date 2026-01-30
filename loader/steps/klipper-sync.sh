@@ -9,8 +9,13 @@ KLIPPER_SOURCE_DIR="${REPO_DIR}/klipper"
 KLIPPER_TARGET_DIR="${PI_HOME}/treed/klipper"
 
 if [ ! -d "${KLIPPER_SOURCE_DIR}" ]; then
-  log_warn "klipper-sync: source dir ${KLIPPER_SOURCE_DIR} not found, skipping"
-  exit 0
+  log_error "klipper-sync: source dir not found: ${KLIPPER_SOURCE_DIR}"
+  exit 1
+fi
+
+if [ -z "$(find "${KLIPPER_SOURCE_DIR}" -mindepth 1 -print -quit 2>/dev/null)" ]; then
+  log_error "klipper-sync: source dir is empty: ${KLIPPER_SOURCE_DIR}"
+  exit 1
 fi
 
 ensure_dir "${PI_HOME}/treed"
