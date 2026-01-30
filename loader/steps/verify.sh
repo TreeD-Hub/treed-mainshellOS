@@ -24,7 +24,7 @@ if [ -z "${BOOT_DIR:-}" ]; then
   BOOT_DIR="$(detect_boot_dir)"
 fi
 
-if [ -z "${CMDLINE_FILE:-}" ] || [ ! -f "${CMDLINE_FILE}" ]; then
+if [ -z "${CMDLINE_FILE:-}" ]; then
   CMDLINE_FILE="$(detect_cmdline_file "${BOOT_DIR}")"
 fi
 
@@ -54,8 +54,9 @@ fi
 
 
 CMDLINE_CONTENT=""
+CMDLINE_PATH="${CMDLINE_FILE:-<empty>}"
 
-if [ -f "${CMDLINE_FILE}" ]; then
+if [ -n "${CMDLINE_FILE:-}" ] && [ -f "${CMDLINE_FILE}" ]; then
   CMDLINE_CONTENT="$(tr -d '\n' < "${CMDLINE_FILE}" 2>/dev/null || true)"
 
   for tok in quiet splash plymouth.ignore-serial-consoles logo.nologo vt.global_cursor_default=0 consoleblank=0 loglevel=3 vt.handoff=7; do
@@ -78,7 +79,7 @@ if [ -f "${CMDLINE_FILE}" ]; then
     failf "cmdline one-line"
   fi
 else
-  failf "cmdline file (${CMDLINE_FILE} missing)"
+  failf "cmdline file missing (${CMDLINE_PATH})"
 fi
 
 state="$(systemctl is-enabled getty@tty1.service 2>/dev/null || true)"

@@ -14,8 +14,8 @@ if [ -z "${CMDLINE_FILE:-}" ]; then
 fi
 
 if [ -z "${CMDLINE_FILE:-}" ] || [ ! -f "${CMDLINE_FILE}" ]; then
-  log_warn "plymouth-cmdline: CMDLINE_FILE not found, skipping"
-  exit 0
+  log_error "plymouth-cmdline: CMDLINE_FILE missing or invalid: ${CMDLINE_FILE:-<empty>}"
+  exit 1
 fi
 
 backup_file_once "${CMDLINE_FILE}"
@@ -35,7 +35,7 @@ read -r -a tokens <<< "${current}"
 new_tokens=()
 for t in "${tokens[@]}"; do
   case "$t" in
-    quiet|splash|plymouth.ignore-serial-consoles|vt.global_cursor_default=*|consoleblank=*|loglevel=*|logo.nologo|plymouth.debug|vt.handoff=*)
+    quiet|splash|plymouth.ignore-serial-consoles|vt.global_cursor_default=*|consoleblank=*|loglevel=*|logo.nologo|plymouth.debug|vt.handoff=*|plymouth.enable=0)
       ;;
     *)
       new_tokens+=("$t")
