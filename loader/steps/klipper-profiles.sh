@@ -18,12 +18,66 @@ fi
 
 mkdir -p "${PROFILES_DIR}"
 
-SERIAL_PATH="$(ls /dev/serial/by-id/* 2>/dev/null | head -n 1 || true)"
-if [ -n "${SERIAL_PATH}" ] && [ -f "${MCU_CFG}" ]; then
-  sed -i "s|^serial:.*$|serial: ${SERIAL_PATH}|" "${MCU_CFG}"
-  log_info "Updated MCU serial in ${MCU_CFG} to ${SERIAL_PATH}"
+if [ ! -f "${MCU_CFG}" ]; then
+  log_error "klipper-profiles: MCU config not found: ${MCU_CFG}"
+  exit 1
+fi
+
+current_serial="$(sed -nE 's|^[[:space:]]*serial:[[:space:]]*([^[:space:]#]+).*|\\1|p' "${MCU_CFG}" | head -n 1 || true)"
+SERIAL_PATH=""
+
+if [ -n "${MCU_SERIAL_BY_ID:-}" ]; then
+  if [ ! -e "${MCU_SERIAL_BY_ID}" ] || [ ! -r "${MCU_SERIAL_BY_ID}" ]; then
+    log_error "klipper-profiles: MCU_SERIAL_BY_ID set but invalid/unreadable: ${MCU_SERIAL_BY_ID}"
+    exit 1
+  fi
+  case "${MCU_SERIAL_BY_ID}" in
+    /dev/serial/by-id/*) ;;
+    *)
+      log_error "klipper-profiles: MCU_SERIAL_BY_ID must be a /dev/serial/by-id/* path, got: ${MCU_SERIAL_BY_ID}"
+      exit 1
+      ;;
+  esac
+  SERIAL_PATH="${MCU_SERIAL_BY_ID}"
+elif [ -n "${current_serial}" ] && [ -e "${current_serial}" ] && [ -r "${current_serial}" ]; then
+  case "${current_serial}" in
+    /dev/serial/by-id/*) SERIAL_PATH="${current_serial}" ;;
+  esac
+fi
+
+if [ -z "${SERIAL_PATH}" ]; then
+  shopt -s nullglob
+  by_id_paths=(/dev/serial/by-id/*)
+  shopt -u nullglob
+
+  case "${#by_id_paths[@]}" in
+    0)
+      log_error "klipper-profiles: no /dev/serial/by-id entries found; cannot set MCU serial"
+      exit 1
+      ;;
+    1)
+      SERIAL_PATH="${by_id_paths[0]}"
+      ;;
+    *)
+      log_error "klipper-profiles: multiple /dev/serial/by-id entries found; ambiguous MCU serial. Set MCU_SERIAL_BY_ID."
+      for p in "${by_id_paths[@]}"; do
+        log_error " - ${p}"
+      done
+      exit 1
+      ;;
+  esac
+fi
+
+if ! grep -qE '^[[:space:]]*serial:[[:space:]]*' "${MCU_CFG}"; then
+  log_error "klipper-profiles: serial line not found in ${MCU_CFG}"
+  exit 1
+fi
+
+if [ "${current_serial}" = "${SERIAL_PATH}" ]; then
+  log_info "MCU serial already correct in ${MCU_CFG}: ${SERIAL_PATH}"
 else
-  log_warn "Could not update MCU serial; SERIAL_PATH='${SERIAL_PATH}', MCU_CFG='${MCU_CFG}'"
+  sed -i -E "s|^([[:space:]]*serial:[[:space:]]*)[^[:space:]#]+(.*)$|\\1${SERIAL_PATH}\\2|" "${MCU_CFG}"
+  log_info "Updated MCU serial in ${MCU_CFG} to ${SERIAL_PATH}"
 fi
 
 cd "${PROFILES_DIR}"
