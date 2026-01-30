@@ -24,8 +24,8 @@ if [ -z "${BOOT_DIR:-}" ]; then
   BOOT_DIR="$(detect_boot_dir)"
 fi
 
-if [ -z "${CMDLINE_FILE:-}" ]; then
-  CMDLINE_FILE="$(detect_cmdline_file "${BOOT_DIR}")"
+if [ -z "${CMDLINE_FILE:-}" ] || [ ! -f "${CMDLINE_FILE}" ]; then
+  CMDLINE_FILE="$(detect_cmdline_file "${BOOT_DIR}" 2>/dev/null || true)"
 fi
 
 if [ -z "${CONFIG_FILE:-}" ] || [ ! -f "${CONFIG_FILE}" ]; then
