@@ -82,11 +82,20 @@ else
   failf "cmdline file missing (${CMDLINE_PATH})"
 fi
 
+TREED_MASK_TTY1="${TREED_MASK_TTY1:-1}"
 state="$(systemctl is-enabled getty@tty1.service 2>/dev/null || true)"
-if [ "${state}" = "masked" ]; then
-  pass "getty@tty1 masked"
+if [ "${TREED_MASK_TTY1}" = "0" ]; then
+  if [ "${state}" = "masked" ]; then
+    failf "getty@tty1 should be unmasked when TREED_MASK_TTY1=0 (currently masked)"
+  else
+    pass "getty@tty1 unmasked (TREED_MASK_TTY1=0)"
+  fi
 else
-  failf "getty@tty1 masked"
+  if [ "${state}" = "masked" ]; then
+    pass "getty@tty1 masked (TREED_MASK_TTY1=1)"
+  else
+    failf "getty@tty1 should be masked when TREED_MASK_TTY1=1 (state=${state})"
+  fi
 fi
 
 for unit in plymouth-quit.service plymouth-quit-wait.service; do
