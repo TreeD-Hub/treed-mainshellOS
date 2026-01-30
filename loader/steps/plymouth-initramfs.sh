@@ -3,6 +3,7 @@ set -euo pipefail
 
 . "${REPO_DIR}/loader/lib/common.sh"
 . "${REPO_DIR}/loader/lib/plymouth.sh"
+. "${REPO_DIR}/loader/lib/rpi.sh"
 
 ensure_root
 
@@ -18,8 +19,9 @@ log_info "plymouth-initramfs: applying theme '${THEME}' and rebuilding initramfs
 plymouth_set_default_theme
 plymouth_rebuild_initramfs
 
+BOOT_DIR="${BOOT_DIR:-$(detect_boot_dir)}"
 initrd_src="/boot/initrd.img-$(uname -r)"
-initrd_dst="/boot/firmware/initrd.img-$(uname -r)"
+initrd_dst="${BOOT_DIR}/initrd.img-$(uname -r)"
 
 if [ -f "${initrd_src}" ]; then
   cp -f "${initrd_src}" "${initrd_dst}"
