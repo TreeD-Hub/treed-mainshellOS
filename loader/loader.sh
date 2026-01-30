@@ -5,7 +5,7 @@ REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 # Normalize CRLF for loader scripts (Windows clones) and ensure executable bits.
 if [ -d "${REPO_DIR}/loader" ]; then
-  find "${REPO_DIR}/loader" -type f -name "*.sh" -print0 | xargs -0 sed -i 's/\r$//'
+  find "${REPO_DIR}/loader" -type f -name "*.sh" -print0 | xargs -0 -r sed -i 's/\r$//'
   chmod +x "${REPO_DIR}/loader/loader.sh" || true
   chmod +x "${REPO_DIR}/loader/steps/"*.sh 2>/dev/null || true
 fi
@@ -29,7 +29,7 @@ export PI_HOME
 export CMDLINE_FILE
 
 . "${REPO_DIR}/loader/lib/common.sh"
-. "${REPO_DIR}/Ыloader/lib/rpi.sh"
+. "${REPO_DIR}/loader/lib/rpi.sh"
 . "${REPO_DIR}/loader/lib/plymouth.sh"
 . "${REPO_DIR}/loader/lib/klipper.sh"
 
