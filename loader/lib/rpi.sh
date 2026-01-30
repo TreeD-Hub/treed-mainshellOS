@@ -15,31 +15,84 @@ detect_rpi_model() {
   echo "$model"
 }
 
-detect_boot_dir() {
-  if [ -d /boot/firmware ]; then
-    echo "/boot/firmware"
-  elif [ -d /boot ]; then
-    echo "/boot"
+is_mounted() {
+  local dir="$1"
+  if [ -r /proc/mounts ]; then
+    awk -v d="$dir" '$2==d {found=1} END {exit !found}' /proc/mounts
   else
-    echo "/boot"
+    return 1
   fi
+}
+
+detect_boot_dir() {
+  local candidates=("/boot/firmware" "/boot")
+  local dir
+
+  # 1) Prefer mounted candidate with both files present.
+  for dir in "${candidates[@]}"; do
+    if [ -d "${dir}" ] && is_mounted "${dir}" \
+      && [ -f "${dir}/config.txt" ] && [ -f "${dir}/cmdline.txt" ]; then
+      echo "${dir}"
+      return 0
+    fi
+  done
+
+  # 2) Prefer mounted candidate with at least one of the files.
+  for dir in "${candidates[@]}"; do
+    if [ -d "${dir}" ] && is_mounted "${dir}" \
+      && { [ -f "${dir}/config.txt" ] || [ -f "${dir}/cmdline.txt" ]; }; then
+      echo "${dir}"
+      return 0
+    fi
+  done
+
+  # 3) Fallback to the first mounted candidate (even if files are not visible yet).
+  for dir in "${candidates[@]}"; do
+    if [ -d "${dir}" ] && is_mounted "${dir}"; then
+      echo "${dir}"
+      return 0
+    fi
+  done
+
+  echo "/boot"
 }
 
 detect_cmdline_file() {
-  local boot_dir="$1"
-  local cmdline="${boot_dir}/cmdline.txt"
+  local boot_dir="${1:-}"
+  local candidates=()
+  local f
 
-  echo "$cmdline"
+  if [ -n "${boot_dir}" ]; then
+    candidates+=("${boot_dir}/cmdline.txt")
+  fi
+  candidates+=("/boot/firmware/cmdline.txt" "/boot/cmdline.txt")
+
+  for f in "${candidates[@]}"; do
+    if [ -f "${f}" ]; then
+      echo "${f}"
+      return 0
+    fi
+  done
+
+  echo ""
 }
 
 detect_config_file() {
-  local boot_dir="$1"
+  local boot_dir="${1:-}"
+  local candidates=()
+  local f
 
-  if [ -f "${boot_dir}/config.txt" ]; then
-    echo "${boot_dir}/config.txt"
-  elif [ -f "/boot/config.txt" ]; then
-    echo "/boot/config.txt"
-  else
-    echo "${boot_dir}/config.txt"
+  if [ -n "${boot_dir}" ]; then
+    candidates+=("${boot_dir}/config.txt")
   fi
+  candidates+=("/boot/firmware/config.txt" "/boot/config.txt")
+
+  for f in "${candidates[@]}"; do
+    if [ -f "${f}" ]; then
+      echo "${f}"
+      return 0
+    fi
+  done
+
+  echo ""
 }

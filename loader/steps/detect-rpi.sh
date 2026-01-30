@@ -11,6 +11,27 @@ BOOT_DIR="$(detect_boot_dir)"
 CMDLINE_FILE="$(detect_cmdline_file "${BOOT_DIR}")"
 CONFIG_FILE="$(detect_config_file "${BOOT_DIR}")"
 
+# Align BOOT_DIR with actual config/cmdline locations when possible.
+if [ -n "${CMDLINE_FILE}" ] && [ -n "${CONFIG_FILE}" ]; then
+  cmd_dir="$(dirname "${CMDLINE_FILE}")"
+  cfg_dir="$(dirname "${CONFIG_FILE}")"
+  if [ "${cmd_dir}" = "${cfg_dir}" ]; then
+    BOOT_DIR="${cfg_dir}"
+  else
+    # Prefer CONFIG_FILE directory as BOOT_DIR anchor (initramfs/config is controlled there).
+    BOOT_DIR="${cfg_dir}"
+  fi
+elif [ -n "${CONFIG_FILE}" ]; then
+  BOOT_DIR="$(dirname "${CONFIG_FILE}")"
+elif [ -n "${CMDLINE_FILE}" ]; then
+  BOOT_DIR="$(dirname "${CMDLINE_FILE}")"
+fi
+
+if [ -n "${BOOT_DIR}" ]; then
+  [ -f "${BOOT_DIR}/cmdline.txt" ] && CMDLINE_FILE="${BOOT_DIR}/cmdline.txt"
+  [ -f "${BOOT_DIR}/config.txt" ] && CONFIG_FILE="${BOOT_DIR}/config.txt"
+fi
+
 export RPI_MODEL
 export BOOT_DIR
 export CMDLINE_FILE
