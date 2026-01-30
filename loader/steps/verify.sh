@@ -43,36 +43,42 @@ fi
 
 # Проверка строки initramfs в config.txt
 if [ -f "${CONFIG_FILE}" ]; then
-  if grep -Fq "initramfs initrd.img-${KVER}" "${CONFIG_FILE}"; then
-    pass "config.txt initramfs initrd.img-${KVER}"
+  if grep -Fq "initramfs initrd.img-${KVER} followkernel" "${CONFIG_FILE}"; then
+    pass "config.txt initramfs initrd.img-${KVER} followkernel"
   else
-    failf "config.txt initramfs initrd.img-${KVER}"
+    failf "config.txt initramfs initrd.img-${KVER} followkernel"
   fi
 else
   failf "config.txt (${CONFIG_FILE} missing)"
 fi
 
 
-CMDLINE_CONTENT="$(tr -d '\n' < "${CMDLINE_FILE}" 2>/dev/null || true)"
+CMDLINE_CONTENT=""
 
-for tok in quiet splash plymouth.ignore-serial-consoles logo.nologo vt.global_cursor_default=0; do
-  if printf '%s\n' "${CMDLINE_CONTENT}" | grep -qE "(^| )${tok}( |$)"; then
-    pass "cmdline token ${tok}"
+if [ -f "${CMDLINE_FILE}" ]; then
+  CMDLINE_CONTENT="$(tr -d '\n' < "${CMDLINE_FILE}" 2>/dev/null || true)"
+
+  for tok in quiet splash plymouth.ignore-serial-consoles logo.nologo vt.global_cursor_default=0 consoleblank=0 loglevel=3 vt.handoff=7; do
+    if printf '%s\n' "${CMDLINE_CONTENT}" | grep -qE "(^| )${tok}( |$)"; then
+      pass "cmdline token ${tok}"
+    else
+      failf "cmdline token ${tok}"
+    fi
+  done
+
+  if printf '%s\n' "${CMDLINE_CONTENT}" | grep -q "plymouth.enable=0"; then
+    failf "cmdline has plymouth.enable=0"
   else
-    failf "cmdline token ${tok}"
+    pass "cmdline has no plymouth.enable=0"
   fi
-done
 
-if printf '%s\n' "${CMDLINE_CONTENT}" | grep -q "plymouth.enable=0"; then
-  failf "cmdline has plymouth.enable=0"
+  if [ "$(wc -l < "${CMDLINE_FILE}" 2>/dev/null || echo 2)" -eq 1 ]; then
+    pass "cmdline one-line"
+  else
+    failf "cmdline one-line"
+  fi
 else
-  pass "cmdline has no plymouth.enable=0"
-fi
-
-if [ "$(wc -l < "${CMDLINE_FILE}" 2>/dev/null || echo 2)" -eq 1 ]; then
-  pass "cmdline one-line"
-else
-  failf "cmdline one-line"
+  failf "cmdline file (${CMDLINE_FILE} missing)"
 fi
 
 state="$(systemctl is-enabled getty@tty1.service 2>/dev/null || true)"

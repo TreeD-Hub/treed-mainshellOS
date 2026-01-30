@@ -2,6 +2,14 @@
 set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+# Normalize CRLF for loader scripts (Windows clones) and ensure executable bits.
+if [ -d "${REPO_DIR}/loader" ]; then
+  find "${REPO_DIR}/loader" -type f -name "*.sh" -print0 | xargs -0 sed -i 's/\r$//'
+  chmod +x "${REPO_DIR}/loader/loader.sh" || true
+  chmod +x "${REPO_DIR}/loader/steps/"*.sh 2>/dev/null || true
+fi
+
 PI_USER="${PI_USER:-${SUDO_USER:-$(id -un)}}"
 PI_HOME="$(getent passwd "$PI_USER" | cut -d: -f6 || true)"
 
@@ -21,11 +29,11 @@ export PI_HOME
 export CMDLINE_FILE
 
 . "${REPO_DIR}/loader/lib/common.sh"
-. "${REPO_DIR}/loader/lib/rpi.sh"
+. "${REPO_DIR}/Ыloader/lib/rpi.sh"
 . "${REPO_DIR}/loader/lib/plymouth.sh"
 . "${REPO_DIR}/loader/lib/klipper.sh"
 
-trap 'log_error "Error in step: ${CURRENT_STEP:-unknown}"; exit 1' ERR
+trap 'rc=$?; log_error "FAILED step=${CURRENT_STEP:-unknown} rc=${rc} line=${BASH_LINENO[0]} cmd=${BASH_COMMAND}"; exit ${rc}' ERR
 
 STEPS=(
   "check-env"
@@ -37,7 +45,6 @@ STEPS=(
   "plymouth-initramfs-config"
   "plymouth-cmdline"
   "plymouth-systemd"
-  "plymouth-verify"
   "klipper-sync"        # репо -> ~/treed/klipper
   "klipper-profiles"    # правим serial, current в staging
   "klipper-core"        # теперь КЛАДЁМ ВЕСЬ klipper/ в /config
@@ -48,10 +55,6 @@ STEPS=(
   "klipperscreen-integr"
   "verify"
 )
-
-
-
-
 
 log_info "TreeD loader starting"
 log_info "REPO_DIR=${REPO_DIR}, PI_USER=${PI_USER}, PI_HOME=${PI_HOME}, CMDLINE_FILE=${CMDLINE_FILE}"
