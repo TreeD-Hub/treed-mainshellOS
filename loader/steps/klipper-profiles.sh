@@ -85,16 +85,7 @@ rm -f current
 ln -s "${PROFILE_NAME}" current
 log_info "Set current profile symlink to ${PROFILE_NAME}"
 
-if [ -z "${PI_USER:-}" ]; then
-  log_error "klipper-profiles: PI_USER is not set"
-  exit 1
-fi
-
-grp="$(id -gn "${PI_USER}" 2>/dev/null || true)"
-if [ -z "${grp}" ]; then
-  log_error "klipper-profiles: cannot determine primary group for user ${PI_USER}"
-  exit 1
-fi
+grp="$(pi_primary_group "${PI_USER:-}")"
 
 chown -R "${PI_USER}:${grp}" "${PI_HOME}/printer_data/config"
 

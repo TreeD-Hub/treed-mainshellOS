@@ -23,16 +23,7 @@ fi
 mkdir -p "${PROFILES_DST}"
 cp -a "${PROFILES_SRC}/." "${PROFILES_DST}/"
 
-if [ -z "${PI_USER:-}" ]; then
-  log_error "klipper-sync-to-config: PI_USER is not set"
-  exit 1
-fi
-
-grp="$(id -gn "${PI_USER}" 2>/dev/null || true)"
-if [ -z "${grp}" ]; then
-  log_error "klipper-sync-to-config: cannot determine primary group for user ${PI_USER}"
-  exit 1
-fi
+grp="$(pi_primary_group "${PI_USER:-}")"
 
 chown -R "${PI_USER}:${grp}" "${PROFILES_DST}"
 

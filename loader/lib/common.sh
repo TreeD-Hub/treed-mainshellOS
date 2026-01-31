@@ -54,3 +54,25 @@ ensure_package() {
     log_info "Package already installed: ${pkg}"
   fi
 }
+
+pi_primary_group() {
+  local user="${1:-}"
+  local grp=""
+
+  if [ -z "${user}" ]; then
+    log_error "pi_primary_group: username is empty"
+    exit 1
+  fi
+
+  if ! grp="$(id -gn "${user}" 2>/dev/null)"; then
+    log_error "pi_primary_group: failed to resolve primary group for user ${user}"
+    exit 1
+  fi
+
+  if [ -z "${grp}" ]; then
+    log_error "pi_primary_group: resolved empty primary group for user ${user}"
+    exit 1
+  fi
+
+  printf '%s\n' "${grp}"
+}

@@ -3,16 +3,7 @@ set -euo pipefail
 
 . "${REPO_DIR}/loader/lib/common.sh"
 
-if [ -z "${PI_USER:-}" ]; then
-  log_error "klipper-core: PI_USER is not set"
-  exit 1
-fi
-
-grp="$(id -gn "${PI_USER}" 2>/dev/null || true)"
-if [ -z "${grp}" ]; then
-  log_error "klipper-core: cannot determine primary group for user ${PI_USER}"
-  exit 1
-fi
+grp="$(pi_primary_group "${PI_USER:-}")"
 
 log_info "Step klipper-core: install full Klipper tree into /home/${PI_USER}/printer_data/config"
 
