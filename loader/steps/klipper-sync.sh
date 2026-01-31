@@ -3,7 +3,14 @@ set -euo pipefail
 
 . "${REPO_DIR}/loader/lib/common.sh"
 
-grp="$(pi_primary_group "${PI_USER:-}")"
+if [ -z "${PI_USER:-}" ]; then
+  log_error "klipper-sync: PI_USER is not set"
+  exit 1
+fi
+
+if ! grp="$(pi_primary_group "${PI_USER}")"; then
+  exit 1
+fi
 
 log_info "Step klipper-sync: syncing Klipper config tree to /home/${PI_USER}/treed/klipper"
 

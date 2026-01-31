@@ -1,3 +1,6 @@
+# DEPRECATED: not used by current loader pipeline
+# Kept for reference only. Do not enable without review.
+# Replaced by: klipper-core
 klipper_ensure_printer_cfg() {
   local src_root="${KLIPPER_BASE_DIR}/printer.cfg"
   local dst_root="${KLIPPER_CONFIG_DIR}/printer.cfg"

@@ -1,5 +1,18 @@
 #!/bin/bash
+# DEPRECATED: not used by current loader pipeline
+# Kept for reference only. Do not enable without review.
+# Replaced by: (none)
 set -euo pipefail
+
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  if [ -z "${REPO_DIR:-}" ]; then
+    REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+    export REPO_DIR
+  fi
+  . "${REPO_DIR}/loader/lib/common.sh"
+  log_error "cleanup-system: deprecated / not in pipeline"
+  exit 1
+fi
 
 . "${REPO_DIR}/loader/lib/common.sh"
 
