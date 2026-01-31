@@ -55,10 +55,104 @@ else
   fi
 fi
 
-if grep -q 'hdmi_cvt=960 544 60' "${CONFIG_FILE}" 2>/dev/null; then
-  log_info "HDMI 960x544 configuration already present in ${CONFIG_FILE}"
+BEGIN_TREED_HDMI="# BEGIN TreeD HDMI"
+END_TREED_HDMI="# END TreeD HDMI"
+
+# Conflict detection (WARN only): show HDMI/dtparam lines outside the managed TreeD block that may override settings.
+conflicts="$(awk -v b="${BEGIN_TREED_HDMI}" -v e="${END_TREED_HDMI}" '
+  BEGIN { inblk=0 }
+  $0==b { inblk=1; next }
+  $0==e { inblk=0; next }
+  inblk { next }
+  $0 ~ /^[[:space:]]*#/ { next }
+  {
+    line=$0
+    sub(/^[[:space:]]+/, "", line)
+    sub(/[[:space:]]+$/, "", line)
+
+    if (line ~ /^hdmi_/) {
+      if (match(line, /^hdmi_group[[:space:]]*=[[:space:]]*([0-9]+)/, m)) {
+        if (m[1] != 2) print $0
+      } else if (match(line, /^hdmi_mode[[:space:]]*=[[:space:]]*([0-9]+)/, m)) {
+        if (m[1] != 87) print $0
+      } else if (match(line, /^hdmi_drive[[:space:]]*=[[:space:]]*([0-9]+)/, m)) {
+        if (m[1] != 2) print $0
+      } else if (line ~ /^hdmi_cvt[[:space:]]*=/) {
+        v=line
+        sub(/^hdmi_cvt[[:space:]]*=[[:space:]]*/, "", v)
+        sub(/[[:space:]]*#.*/, "", v)
+        gsub(/[[:space:]]+/, " ", v)
+        sub(/^[[:space:]]+/, "", v)
+        sub(/[[:space:]]+$/, "", v)
+        if (v != "960 544 60 6 0 0 0") print $0
+      } else {
+        print $0
+      }
+    } else if (line ~ /^dtparam[[:space:]]*=/) {
+      v=line
+      sub(/^dtparam[[:space:]]*=[[:space:]]*/, "", v)
+      sub(/[[:space:]]*#.*/, "", v)
+      sub(/[[:space:]]+$/, "", v)
+
+      if (v ~ /(^|,)i2c_arm=/ && v !~ /(^|,)i2c_arm=on(,|$)/) print $0
+      if (v ~ /(^|,)spi=/ && v !~ /(^|,)spi=on(,|$)/) print $0
+    }
+  }
+' "${CONFIG_FILE}" 2>/dev/null || true)"
+
+if [ -n "${conflicts}" ]; then
+  log_warn "boot-hdmi-config: potential conflicting HDMI/dtparam lines found outside managed TreeD HDMI block:"
+  while IFS= read -r l; do
+    [ -n "${l}" ] && log_warn "${l}"
+  done <<< "${conflicts}"
+fi
+
+# Validate marker structure if present to avoid truncating config.txt on a corrupted block.
+if grep -qF "${BEGIN_TREED_HDMI}" "${CONFIG_FILE}" 2>/dev/null || grep -qF "${END_TREED_HDMI}" "${CONFIG_FILE}" 2>/dev/null; then
+  if ! awk -v b="${BEGIN_TREED_HDMI}" -v e="${END_TREED_HDMI}" '
+    BEGIN { inblk=0; ok=1 }
+    $0==b { if (inblk) ok=0; inblk=1 }
+    $0==e { if (!inblk) ok=0; inblk=0 }
+    END { if (inblk) ok=0; exit ok?0:1 }
+  ' "${CONFIG_FILE}" 2>/dev/null; then
+    log_error "boot-hdmi-config: managed HDMI block markers are inconsistent in ${CONFIG_FILE}"
+    exit 1
+  fi
+fi
+
+if grep -qF "${BEGIN_TREED_HDMI}" "${CONFIG_FILE}" 2>/dev/null; then
+  tmp="$(mktemp)"
+  awk -v b="${BEGIN_TREED_HDMI}" -v e="${END_TREED_HDMI}" '
+    BEGIN { inblk=0; replaced=0 }
+    $0==b {
+      inblk=1
+      if (replaced==0) {
+        print b
+        print "hdmi_group=2"
+        print "hdmi_mode=87"
+        print "hdmi_cvt=960 544 60 6 0 0 0"
+        print "hdmi_drive=2"
+        print "disable_overscan=1"
+        print "disable_splash=1"
+        print "dtparam=i2c_arm=on"
+        print "dtparam=spi=on"
+        print e
+        replaced=1
+      }
+      next
+    }
+    $0==e { if (inblk) { inblk=0; next } }
+    !inblk { print }
+  ' "${CONFIG_FILE}" > "${tmp}"
+  cat "${tmp}" > "${CONFIG_FILE}"
+  rm -f "${tmp}"
+  log_info "Updated managed TreeD HDMI block in ${CONFIG_FILE}"
 else
+  if [ -n "$(tail -c 1 "${CONFIG_FILE}" 2>/dev/null)" ]; then
+    printf '\n' >> "${CONFIG_FILE}"
+  fi
   cat >>"${CONFIG_FILE}" <<EOC
+# BEGIN TreeD HDMI
 hdmi_group=2
 hdmi_mode=87
 hdmi_cvt=960 544 60 6 0 0 0
@@ -67,8 +161,9 @@ disable_overscan=1
 disable_splash=1
 dtparam=i2c_arm=on
 dtparam=spi=on
+# END TreeD HDMI
 EOC
-  log_info "Appended HDMI 960x544 configuration to ${CONFIG_FILE}"
+  log_info "Appended managed TreeD HDMI block to ${CONFIG_FILE}"
 fi
 
 log_info "boot-hdmi-config: OK"
