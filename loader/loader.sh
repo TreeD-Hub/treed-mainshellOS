@@ -18,10 +18,10 @@ if [ -z "${PI_HOME}" ] || [ ! -d "${PI_HOME}" ]; then
   exit 1
 fi
 
-CMDLINE_FILE="/boot/firmware/cmdline.txt"
-if [ ! -f "$CMDLINE_FILE" ]; then
-  CMDLINE_FILE="/boot/cmdline.txt"
-fi
+#CMDLINE_FILE="/boot/firmware/cmdline.txt"
+#if [ ! -f "$CMDLINE_FILE" ]; then
+# CMDLINE_FILE="/boot/cmdline.txt"
+#fi
 
 export REPO_DIR
 export PI_USER
@@ -30,6 +30,39 @@ export CMDLINE_FILE
 
 . "${REPO_DIR}/loader/lib/common.sh"
 . "${REPO_DIR}/loader/lib/rpi.sh"
+
+BOOT_DIR="$(detect_boot_dir)"
+CMDLINE_FILE="$(detect_cmdline_file "${BOOT_DIR}")"
+CONFIG_FILE="$(detect_config_file "${BOOT_DIR}")"
+
+# Align BOOT_DIR with actual config/cmdline locations when possible.
+if [ -n "${CMDLINE_FILE}" ] && [ -n "${CONFIG_FILE}" ]; then
+  cmd_dir="$(dirname "${CMDLINE_FILE}")"
+  cfg_dir="$(dirname "${CONFIG_FILE}")"
+  if [ "${cmd_dir}" = "${cfg_dir}" ]; then
+    BOOT_DIR="${cmd_dir}"
+  fi
+elif [ -n "${CMDLINE_FILE}" ]; then
+  BOOT_DIR="$(dirname "${CMDLINE_FILE}")"
+elif [ -n "${CONFIG_FILE}" ]; then
+  BOOT_DIR="$(dirname "${CONFIG_FILE}")"
+fi
+
+# Fail fast: do not continue with empty paths (prevents silent skips in steps).
+if [ -z "${CMDLINE_FILE}" ] || [ ! -f "${CMDLINE_FILE}" ]; then
+  echo "[loader] ERROR: cmdline.txt not found (BOOT_DIR=${BOOT_DIR})" >&2
+  exit 1
+fi
+if [ -z "${CONFIG_FILE}" ] || [ ! -f "${CONFIG_FILE}" ]; then
+  echo "[loader] ERROR: config.txt not found (BOOT_DIR=${BOOT_DIR})" >&2
+  exit 1
+fi
+
+export BOOT_DIR
+export CMDLINE_FILE
+export CONFIG_FILE
+
+
 . "${REPO_DIR}/loader/lib/plymouth.sh"
 . "${REPO_DIR}/loader/lib/klipper.sh"
 
