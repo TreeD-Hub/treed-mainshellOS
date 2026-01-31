@@ -77,6 +77,7 @@ STEPS=(
   "klipper-core"        # теперь КЛАДЁМ ВЕСЬ klipper/ в /config
   "klipper-anti-shutdown"
   "moonraker-config"
+  "crowsnest-webcam"
   "klipper-mainsail-theme"
   #"klipperscreen-install"
   "klipperscreen-integr"
