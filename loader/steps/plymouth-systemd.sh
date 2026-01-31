@@ -29,11 +29,11 @@ if [ "${TREED_MASK_TTY1}" = "0" ]; then
   log_info "TREED_MASK_TTY1=0: keeping ${TTY1_UNIT} unmasked (local console recovery enabled)"
   if [ "${state}" = "masked" ]; then
     # Non-fatal: continue even if unmask fails; verify will report mismatch.
-    if ! err="$(systemctl unmask "${TTY1_UNIT}" 2>&1)"; then
+    if err="$(systemctl unmask "${TTY1_UNIT}" 2>&1)"; then
+      log_info "Unmasked ${TTY1_UNIT}"
+    else
       rc=$?
       log_warn "plymouth-systemd: systemctl unmask ${TTY1_UNIT} failed rc=${rc}: ${err}"
-    else
-      log_info "Unmasked ${TTY1_UNIT}"
     fi
   else
     log_info "${TTY1_UNIT} already unmasked (state=${state})"
@@ -42,11 +42,11 @@ else
   log_info "TREED_MASK_TTY1=${TREED_MASK_TTY1}: masking ${TTY1_UNIT} (local console recovery disabled)"
   if [ "${state}" != "masked" ]; then
     # Non-fatal: continue even if mask fails; verify will report mismatch.
-    if ! err="$(systemctl mask "${TTY1_UNIT}" 2>&1)"; then
+    if err="$(systemctl mask "${TTY1_UNIT}" 2>&1)"; then
+      log_info "Masked ${TTY1_UNIT}"
+    else
       rc=$?
       log_warn "plymouth-systemd: systemctl mask ${TTY1_UNIT} failed rc=${rc}: ${err}"
-    else
-      log_info "Masked ${TTY1_UNIT}"
     fi
   else
     log_info "${TTY1_UNIT} already masked"
@@ -55,7 +55,9 @@ fi
 
 # Non-fatal: these units may not exist on all distros; we still want to proceed but not silently.
 for unit in plymouth-quit.service plymouth-quit-wait.service; do
-  if ! err="$(systemctl unmask "${unit}" 2>&1)"; then
+  if err="$(systemctl unmask "${unit}" 2>&1)"; then
+    :
+  else
     rc=$?
     log_warn "plymouth-systemd: systemctl unmask ${unit} failed rc=${rc}: ${err}"
   fi
