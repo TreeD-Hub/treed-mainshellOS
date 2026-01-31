@@ -21,7 +21,17 @@ Wants=plymouth-quit.service
 ExecStartPre=/bin/sh -lc 'plymouth quit --retain-splash || true'
 EOF
 
-systemctl daemon-reload || true
-systemctl restart KlipperScreen.service || true
+# Non-fatal: during some install/first-boot scenarios systemd may not be fully ready.
+# We still deploy the override; it will apply once systemd is reloaded/restarted.
+if ! err="$(systemctl daemon-reload 2>&1)"; then
+  rc=$?
+  log_warn "klipperscreen-integr: systemctl daemon-reload failed rc=${rc}: ${err}"
+fi
+
+# Non-fatal: KlipperScreen.service may be absent/disabled; override is still installed for later.
+if ! err="$(systemctl restart KlipperScreen.service 2>&1)"; then
+  rc=$?
+  log_warn "klipperscreen-integr: systemctl restart KlipperScreen.service failed rc=${rc}: ${err}"
+fi
 
 log_info "klipperscreen-integr: OK"
