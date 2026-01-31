@@ -83,27 +83,52 @@ else
 fi
 
 TREED_MASK_TTY1="${TREED_MASK_TTY1:-1}"
-state="$(systemctl is-enabled getty@tty1.service 2>/dev/null || true)"
+out="$(systemctl is-enabled getty@tty1.service 2>&1)"
+rc=$?
+state="$(printf '%s' "${out}" | head -n 1 | tr -d '\r\n')"
+case "${state}" in
+  enabled|disabled|static|indirect|generated|masked|masked-runtime) ;;
+  *)
+    log_error "verify: systemctl is-enabled getty@tty1.service failed rc=${rc}: ${out}"
+    exit 1
+    ;;
+esac
 if [ "${TREED_MASK_TTY1}" = "0" ]; then
-  if [ "${state}" = "masked" ]; then
-    failf "getty@tty1 should be unmasked when TREED_MASK_TTY1=0 (currently masked)"
-  else
-    pass "getty@tty1 unmasked (TREED_MASK_TTY1=0)"
-  fi
+  case "${state}" in
+    masked|masked-runtime)
+      failf "getty@tty1 should be unmasked when TREED_MASK_TTY1=0 (state=${state})"
+      ;;
+    enabled|disabled|static|indirect|generated)
+      pass "getty@tty1 unmasked (TREED_MASK_TTY1=0, state=${state})"
+      ;;
+    *)
+      failf "getty@tty1 should be unmasked when TREED_MASK_TTY1=0 (state=${state})"
+      ;;
+  esac
 else
-  if [ "${state}" = "masked" ]; then
-    pass "getty@tty1 masked (TREED_MASK_TTY1=1)"
+  if [ "${state}" = "masked" ] || [ "${state}" = "masked-runtime" ]; then
+    pass "getty@tty1 masked (TREED_MASK_TTY1=1, state=${state})"
   else
     failf "getty@tty1 should be masked when TREED_MASK_TTY1=1 (state=${state})"
   fi
 fi
 
 for unit in plymouth-quit.service plymouth-quit-wait.service; do
-  s="$(systemctl is-enabled "${unit}" 2>/dev/null || true)"
-  if [ "${s}" = "masked" ]; then
-    failf "${unit} not masked (should be unmasked)"
+  uout="$(systemctl is-enabled "${unit}" 2>&1)"
+  urc=$?
+  s="$(printf '%s' "${uout}" | head -n 1 | tr -d '\r\n')"
+  case "${s}" in
+    enabled|disabled|static|indirect|generated|masked|masked-runtime) ;;
+    *)
+      log_error "verify: systemctl is-enabled ${unit} failed rc=${urc}: ${uout}"
+      exit 1
+      ;;
+  esac
+
+  if [ "${s}" = "masked" ] || [ "${s}" = "masked-runtime" ]; then
+    failf "${unit} should be unmasked (state=${s})"
   else
-    pass "${unit} unmasked"
+    pass "${unit} unmasked (state=${s})"
   fi
 done
 
