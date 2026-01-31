@@ -65,13 +65,21 @@ done
 
 if systemctl list-unit-files | grep -q '^treed-plymouth-late.service'; then
   # Non-fatal cleanup: loader can continue even if this unit can't be disabled right now.
-  if ! err="$(systemctl disable --now treed-plymouth-late.service 2>&1)"; then
+  if err="$(systemctl disable --now treed-plymouth-late.service 2>&1)"; then
+    :
+  else
     rc=$?
     log_warn "plymouth-systemd: systemctl disable --now treed-plymouth-late.service failed rc=${rc}: ${err}"
   fi
   rm -f /etc/systemd/system/treed-plymouth-late.service
 fi
 
-systemctl daemon-reload
+if err="$(systemctl daemon-reload 2>&1)"; then
+  :
+else
+  rc=$?
+  log_error "plymouth-systemd: systemctl daemon-reload failed rc=${rc}: ${err}"
+  exit 1
+fi
 
 log_info "plymouth-systemd: OK"
