@@ -83,8 +83,11 @@ else
 fi
 
 TREED_MASK_TTY1="${TREED_MASK_TTY1:-1}"
-out="$(systemctl is-enabled getty@tty1.service 2>&1)"
-rc=$?
+if out="$(systemctl is-enabled getty@tty1.service 2>&1)"; then
+  rc=0
+else
+  rc=$?
+fi
 state="$(printf '%s' "${out}" | head -n 1 | tr -d '\r\n')"
 case "${state}" in
   enabled|disabled|static|indirect|generated|masked|masked-runtime) ;;
@@ -114,8 +117,11 @@ else
 fi
 
 for unit in plymouth-quit.service plymouth-quit-wait.service; do
-  uout="$(systemctl is-enabled "${unit}" 2>&1)"
-  urc=$?
+  if uout="$(systemctl is-enabled "${unit}" 2>&1)"; then
+    urc=0
+  else
+    urc=$?
+  fi
   s="$(printf '%s' "${uout}" | head -n 1 | tr -d '\r\n')"
   case "${s}" in
     enabled|disabled|static|indirect|generated|masked|masked-runtime) ;;
