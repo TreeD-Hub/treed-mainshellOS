@@ -18,8 +18,7 @@ CAM_DEVICE="/dev/video0"
 CAM_RESOLUTION="1920x1080"
 CAM_FPS="15"
 CAM_PORT="8080"
-
-USTREAMER_FLAGS="--resolution=${CAM_RESOLUTION} --format=JPEG --desired-fps=${CAM_MAX_FPS}"
+USTREAMER_FLAGS="--resolution=${CAM_RESOLUTION} --format=JPEG --desired-fps=${CAM_FPS}"
 
 ensure_dir "${CONFIG_DIR}"
 
