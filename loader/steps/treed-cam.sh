@@ -5,7 +5,8 @@ REPO_DIR="${REPO_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
 LIB_DIR="${REPO_DIR}/loader/lib"
 source "${LIB_DIR}/common.sh"
 
-step_title "treed-cam (dataset snapshots scripts)"
+log_info "Step treed-cam"
+
 
 PI_USER="${PI_USER:-pi}"
 PI_HOME="${PI_HOME:-/home/${PI_USER}}"
