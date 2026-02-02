@@ -1,0 +1,34 @@
+#!/bin/bash
+set -euo pipefail
+
+REPO_DIR="${REPO_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
+LIB_DIR="${REPO_DIR}/loader/lib"
+source "${LIB_DIR}/common.sh"
+
+step_title "treed-cam (dataset snapshots scripts)"
+
+PI_USER="${PI_USER:-pi}"
+PI_HOME="${PI_HOME:-/home/${PI_USER}}"
+
+SRC_DIR="${REPO_DIR}/scripts/treed-cam"
+DST_ROOT="${PI_HOME}/treed/cam"
+DST_BIN="${DST_ROOT}/bin"
+DST_DATA="${DST_ROOT}/prints"
+
+ensure_dir "${DST_BIN}"
+ensure_dir "${DST_DATA}"
+
+if [[ ! -d "${SRC_DIR}" ]]; then
+  log_error "Missing scripts directory: ${SRC_DIR}"
+  exit 1
+fi
+
+log_info "Sync scripts: ${SRC_DIR} -> ${DST_BIN}"
+rm -rf "${DST_BIN:?}/"*
+cp -a "${SRC_DIR}/." "${DST_BIN}/"
+
+find "${DST_BIN}" -type f -name '*.sh' -exec chmod +x {} \;
+
+chown -R "${PI_USER}:${PI_USER}" "${DST_ROOT}" || true
+
+log_info "treed-cam: DONE (data at ${DST_DATA})"

@@ -78,6 +78,7 @@ STEPS=(
   "klipper-anti-shutdown"
   "moonraker-config"
   "crowsnest-webcam"
+  "treed-cam"
   "klipper-mainsail-theme"
   #"klipperscreen-install"
   "klipperscreen-integr"
