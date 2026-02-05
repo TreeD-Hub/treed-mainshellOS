@@ -18,5 +18,6 @@ find loader/steps -type f -name '*.sh' -exec chmod +x {} +
 
 sudo bash loader/loader.sh
 sudo reboot
+
 ```
 
