@@ -66,7 +66,6 @@ upsert_moonraker_webcam_treed() {
 
 [webcam treed]
 location: printer
-service: crowsnest
 target_fps: 15
 target_fps_idle: 5
 stream_url: /webcam/?action=stream
