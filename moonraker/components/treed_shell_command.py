@@ -13,6 +13,8 @@ from dataclasses import dataclass
 from typing import Dict, Optional, TYPE_CHECKING, Iterable
 from ..utils import ServerError
 
+LOGGER = logging.getLogger(__name__)
+
 if TYPE_CHECKING:
     from ..confighelper import ConfigHelper
     from .shell_command import ShellCommandFactory
@@ -56,7 +58,7 @@ class TreeDShellCommand:
         try:
             self.server.register_remote_method("machine.shell_command", self._queue_run)
         except ServerError:
-            logging.info(
+            LOGGER.info(
                 "treed_shell_command: machine.shell_command already registered; "
                 "skipping override"
             )
@@ -69,7 +71,7 @@ class TreeDShellCommand:
     async def _run(self, cmd: str, parameters: object = "") -> None:
         entry = self.commands.get(cmd)
         if entry is None:
-            logging.info(
+            LOGGER.info(
                 "treed_shell_command: command '%s' not configured, request ignored",
                 cmd,
             )
@@ -94,13 +96,15 @@ class TreeDShellCommand:
                 cwd=entry.cwd,
             )
         except self.shell_cmd.error as err:
-            logging.info(
+            LOGGER.info(
                 "treed_shell_command: '%s' failed rc=%s",
                 cmd,
                 err.return_code,
             )
         except Exception:
-            logging.exception("treed_shell_command: unexpected error running '%s'", cmd)
+            LOGGER.exception(
+                "treed_shell_command: unexpected error running '%s'", cmd
+            )
 
 
 def load_component(config: ConfigHelper) -> TreeDShellCommand:
