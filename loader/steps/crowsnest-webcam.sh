@@ -11,8 +11,10 @@ PI_USER="${PI_USER:-pi}"
 PI_HOME="${PI_HOME:-/home/${PI_USER}}"
 
 CONFIG_DIR="${PI_HOME}/printer_data/config"
+DATA_DIR="${PI_HOME}/printer_data"
 CROWSNEST_CONF="${CONFIG_DIR}/crowsnest.conf"
 MOONRAKER_CONF="${CONFIG_DIR}/moonraker.conf"
+MOONRAKER_ASVC="${DATA_DIR}/moonraker.asvc"
 
 CAM_DEVICE="/dev/video0"
 CAM_RESOLUTION="1920x1080"
@@ -92,6 +94,21 @@ max_fps: ${CAM_FPS}
 EOF
 }
 
+ensure_crowsnest_allowed_service() {
+  if [ ! -f "${MOONRAKER_ASVC}" ]; then
+    log_warn "moonraker.asvc not found at ${MOONRAKER_ASVC}; cannot whitelist crowsnest yet"
+    return 0
+  fi
+
+  if grep -qE '^[[:space:]]*crowsnest([.]service)?[[:space:]]*$' "${MOONRAKER_ASVC}"; then
+    log_info "moonraker.asvc already allows crowsnest"
+    return 0
+  fi
+
+  printf 'crowsnest\n' >> "${MOONRAKER_ASVC}"
+  log_info "Added crowsnest to ${MOONRAKER_ASVC}"
+}
+
 apply_services() {
   if systemctl list-unit-files --no-pager 2>/dev/null | grep -qE '^crowsnest\.service'; then
     log_info "Enabling and restarting crowsnest"
@@ -110,8 +127,10 @@ apply_services() {
 
 upsert_moonraker_webcam_treed
 write_crowsnest_conf
+ensure_crowsnest_allowed_service
 chown "${PI_USER}:${PI_USER}" "${CROWSNEST_CONF}" || true
 chown "${PI_USER}:${PI_USER}" "${MOONRAKER_CONF}" || true
+chown "${PI_USER}:${PI_USER}" "${MOONRAKER_ASVC}" || true
 
 apply_services
 
