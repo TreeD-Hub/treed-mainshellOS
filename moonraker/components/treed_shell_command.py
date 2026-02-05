@@ -10,7 +10,8 @@ from __future__ import annotations
 import logging
 import shlex
 from dataclasses import dataclass
-from typing import Dict, Optional, TYPE_CHECKING
+from typing import Dict, Optional, TYPE_CHECKING, Iterable
+from ..utils import ServerError
 
 if TYPE_CHECKING:
     from ..confighelper import ConfigHelper
@@ -52,14 +53,20 @@ class TreeDShellCommand:
                 "[treed_shell_command]: no [shell_command <name>] sections found."
             )
 
-        self.server.register_remote_method("machine.shell_command", self._queue_run)
+        try:
+            self.server.register_remote_method("machine.shell_command", self._queue_run)
+        except ServerError:
+            logging.info(
+                "treed_shell_command: machine.shell_command already registered; "
+                "skipping override"
+            )
 
     def _queue_run(
         self, cmd: str = "", parameters: str = "", **_kwargs: object
     ) -> None:
         self.event_loop.register_callback(self._run, cmd, parameters)
 
-    async def _run(self, cmd: str, parameters: str = "") -> None:
+    async def _run(self, cmd: str, parameters: object = "") -> None:
         entry = self.commands.get(cmd)
         if entry is None:
             logging.info(
@@ -69,9 +76,14 @@ class TreeDShellCommand:
             return
 
         full_cmd = entry.command
-        param_text = str(parameters or "").strip()
-        if param_text:
-            full_cmd = f"{full_cmd} {shlex.quote(param_text)}"
+        if isinstance(parameters, Iterable) and not isinstance(parameters, (str, bytes)):
+            args = [shlex.quote(str(p)) for p in parameters if str(p).strip()]
+            if args:
+                full_cmd = f"{full_cmd} " + " ".join(args)
+        else:
+            param_text = str(parameters or "").strip()
+            if param_text:
+                full_cmd = f"{full_cmd} {shlex.quote(param_text)}"
 
         try:
             await self.shell_cmd.run_cmd_async(

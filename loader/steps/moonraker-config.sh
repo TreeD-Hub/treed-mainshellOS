@@ -62,6 +62,7 @@ find_moonraker_components_dir() {
   # Fallback discovery while excluding this repo path.
   candidate="$(
     find /home /usr /opt \
+      -maxdepth 5 \
       -type f \
       -path '*/moonraker/components/machine.py' \
       ! -path "${REPO_DIR}/*" \
