@@ -1,33 +1,21 @@
 ```bash только клиппер
-cd /home/pi/treed/.staging
-sudo rm -rf treed-mainshellOS
-git clone https://github.com/Yawllen/treed-mainshellOS treed-mainshellOS
-mkdir -p /home/pi/treed/klipper
-rsync -a --delete treed-mainshellOS/klipper/ /home/pi/treed/klipper/
-sudo systemctl restart klipper
-```
+set -euo pipefail
+REPO_URL="https://github.com/TreeD-Hub/treed-mainshellOS.git"
+BRANCH="dev-cam"
+BASE="/home/pi/treed"
+REPO_DIR="${BASE}/treed-mainshellOS"
 
+sudo systemctl stop klipper moonraker KlipperScreen 2>/dev/null || true
 
-```bash
-cd /home/pi/treed/.staging
-sudo rm -rf treed-mainshellOS
-git clone https://github.com/Yawllen/treed-mainshellOS treed-mainshellOS
-cd treed-mainshellOS
-sudo sed -i 's/\r$//' loader/loader.sh loader/lib/*.sh loader/steps/*.sh
-sudo chmod +x loader/loader.sh
-sudo bash loader/loader.sh
-sudo reboot
-```
+mkdir -p "${BASE}"
+sudo rm -rf "${REPO_DIR}"
+git clone --branch "${BRANCH}" --depth 1 "${REPO_URL}" "${REPO_DIR}"
 
+cd "${REPO_DIR}"
+find loader -type f -name '*.sh' -print0 | xargs -0 sed -i 's/\r$//'
+chmod +x loader/loader.sh
+find loader/steps -type f -name '*.sh' -exec chmod +x {} +
 
-
-```bash
-cd /home/pi/treed/.staging
-sudo rm -rf treed-mainshellOS
-git clone https://github.com/Yawllen/treed-mainshellOS treed-mainshellOS
-cd treed-mainshellOS
-sudo sed -i 's/\r$//' loader/loader.sh loader/lib/*.sh loader/steps/*.sh
-sudo chmod +x loader/loader.sh
 sudo bash loader/loader.sh
 sudo reboot
 ```
