@@ -96,10 +96,9 @@ EOF
 
 apply_services() {
   if systemctl list-unit-files --no-pager 2>/dev/null | grep -qE '^crowsnest\.service'; then
-  if systemctl is-enabled --quiet crowsnest.service 2>/dev/null || systemctl is-active --quiet crowsnest.service 2>/dev/null; then
     log_info "Enabling and restarting crowsnest"
-    systemctl enable  crowsnest.service >/dev/null 2>&1 || true
-    systemctl restart  crowsnest.service
+    systemctl enable crowsnest.service >/dev/null 2>&1 || true
+    systemctl restart crowsnest.service
   else
     log_warn "crowsnest.service not found; skipping restart"
   fi
@@ -109,6 +108,7 @@ apply_services() {
     systemctl restart moonraker
   fi
 }
+
 
 upsert_moonraker_webcam_treed
 write_crowsnest_conf
