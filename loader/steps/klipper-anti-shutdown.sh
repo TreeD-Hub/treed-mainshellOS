@@ -58,7 +58,7 @@ if [ ! -f "$LOG" ]; then
 else
   if tail -n 300 "$LOG" | grep -q "shutdown:"; then
     log_info "${STEP}: MCU is shutdown; sending FIRMWARE_RESTART"
-    # Prefer python (socat may segfault on some images)
+    # Always use python3; some images ship a broken socat binary.
     if command -v python3 >/dev/null 2>&1; then
       if python3 - <<PY >/dev/null 2>&1
 import socket, sys
@@ -75,16 +75,8 @@ PY
         log_warn "${STEP}: python3 send to ${SOCK} failed rc=${rc}"
       fi
       sleep 2
-    elif command -v socat >/dev/null 2>&1 && socat -V >/dev/null 2>&1; then
-      if printf "FIRMWARE_RESTART\n" | socat - "$SOCK" >/dev/null 2>&1; then
-        :
-      else
-        rc=$?
-        log_warn "${STEP}: socat send to ${SOCK} failed rc=${rc}"
-      fi
-      sleep 2
     else
-      log_warn "${STEP}: cannot send FIRMWARE_RESTART (need python3 or working socat); skipping"
+      log_warn "${STEP}: cannot send FIRMWARE_RESTART (python3 required); skipping"
     fi
   fi
 fi
