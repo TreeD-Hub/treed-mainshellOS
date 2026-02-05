@@ -36,11 +36,6 @@ ensure_moonraker_webcam_block() {
 
   log_info "Appending [webcam] section to moonraker.conf"
   cat >> "${MOONRAKER_CONF}" <<'EOF'
-
-[webcam]
-stream_url: /webcam/?action=stream
-snapshot_url: /webcam/?action=snapshot
-service: mjpegstreamer
 EOF
 }
 
