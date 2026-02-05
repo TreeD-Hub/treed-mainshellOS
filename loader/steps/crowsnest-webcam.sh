@@ -5,7 +5,6 @@ REPO_DIR="${REPO_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
 LIB_DIR="${REPO_DIR}/loader/lib"
 source "${LIB_DIR}/common.sh"
 
-#step_title "crowsnest-webcam (fixed 1920x1080 for single USB cam)"
 log_info "Step crowsnest-webcam: fixed 1920x1080 for single USB cam"
 
 PI_USER="${PI_USER:-pi}"
@@ -23,19 +22,56 @@ USTREAMER_FLAGS="--resolution=${CAM_RESOLUTION} --format=JPEG --desired-fps=${CA
 
 ensure_dir "${CONFIG_DIR}"
 
-ensure_moonraker_webcam_block() {
+remove_moonraker_section() {
+  local section_name="$1"
+  local tmp
+  tmp="$(mktemp)"
+
+  awk -v sec="[""${section_name}""]" '
+    BEGIN { drop=0 }
+    {
+      if ($0 ~ /^\[/) {
+        if ($0 == sec) { drop=1; next }
+        drop=0
+      }
+      if (!drop) print
+    }
+  ' "${MOONRAKER_CONF}" > "${tmp}"
+
+  mv "${tmp}" "${MOONRAKER_CONF}"
+}
+
+upsert_moonraker_webcam_treed() {
   if [[ ! -f "${MOONRAKER_CONF}" ]]; then
     log_warn "moonraker.conf not found at ${MOONRAKER_CONF}; skipping webcam section ensure"
     return 0
   fi
 
-  if grep -qE '^\[webcam\]' "${MOONRAKER_CONF}"; then
-    log_info "moonraker.conf already has [webcam] section"
-    return 0
+  # Remove legacy/unwanted [webcam] section if it exists
+  if grep -qE '^\[webcam\]\s*$' "${MOONRAKER_CONF}"; then
+    log_info "Removing legacy [webcam] section from moonraker.conf"
+    remove_moonraker_section "webcam"
   fi
 
-  log_info "Appending [webcam] section to moonraker.conf"
+  # Remove existing [webcam treed] to re-add cleanly (idempotent)
+  if grep -qE '^\[webcam treed\]\s*$' "${MOONRAKER_CONF}"; then
+    log_info "Replacing existing [webcam treed] section in moonraker.conf"
+    remove_moonraker_section "webcam treed"
+  else
+    log_info "Adding [webcam treed] section to moonraker.conf"
+  fi
+
   cat >> "${MOONRAKER_CONF}" <<'EOF'
+
+[webcam treed]
+location: printer
+service: mjpegstreamer
+target_fps: 15
+target_fps_idle: 5
+stream_url: /webcam/?action=stream
+snapshot_url: /webcam/?action=snapshot
+enabled: True
+icon: mdiWebcam
 EOF
 }
 
@@ -59,7 +95,7 @@ EOF
 }
 
 apply_services() {
-  if systemctl list-unit-files | grep -q '^crowsnest\.service'; then
+  if systemctl list-unit-files --no-pager 2>/dev/null | grep -qE '^crowsnest\.service'; then
     log_info "Enabling and restarting crowsnest"
     systemctl enable crowsnest >/dev/null 2>&1 || true
     systemctl restart crowsnest
@@ -67,15 +103,16 @@ apply_services() {
     log_warn "crowsnest.service not found; skipping restart"
   fi
 
-  if systemctl list-unit-files | grep -q '^moonraker\.service'; then
+  if systemctl list-unit-files --no-pager 2>/dev/null | grep -qE '^moonraker\.service'; then
     log_info "Restarting moonraker"
     systemctl restart moonraker
   fi
 }
 
-ensure_moonraker_webcam_block
+upsert_moonraker_webcam_treed
 write_crowsnest_conf
 chown "${PI_USER}:${PI_USER}" "${CROWSNEST_CONF}" || true
+chown "${PI_USER}:${PI_USER}" "${MOONRAKER_CONF}" || true
 
 apply_services
 
