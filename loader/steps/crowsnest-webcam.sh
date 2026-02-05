@@ -18,7 +18,6 @@ CAM_DEVICE="/dev/video0"
 CAM_RESOLUTION="1920x1080"
 CAM_FPS="15"
 CAM_PORT="8080"
-USTREAMER_FLAGS="--resolution=${CAM_RESOLUTION} --format=JPEG --desired-fps=${CAM_FPS}"
 
 ensure_dir "${CONFIG_DIR}"
 
@@ -65,7 +64,7 @@ upsert_moonraker_webcam_treed() {
 
 [webcam treed]
 location: printer
-service: mjpegstreamer
+service: crowsnest
 target_fps: 15
 target_fps_idle: 5
 stream_url: /webcam/?action=stream
@@ -90,7 +89,6 @@ port: ${CAM_PORT}
 device: ${CAM_DEVICE}
 resolution: ${CAM_RESOLUTION}
 max_fps: ${CAM_FPS}
-custom_flags: ${USTREAMER_FLAGS}
 EOF
 }
 
@@ -117,4 +115,4 @@ chown "${PI_USER}:${PI_USER}" "${MOONRAKER_CONF}" || true
 
 apply_services
 
-log_info "crowsnest-webcam: DONE (device=${CAM_DEVICE}, res=${CAM_RESOLUTION}, flags='${USTREAMER_FLAGS}')"
+log_info "crowsnest-webcam: DONE (device=${CAM_DEVICE}, res=${CAM_RESOLUTION}, fps=${CAM_FPS})"
