@@ -16,12 +16,46 @@ CROWSNEST_CONF="${CONFIG_DIR}/crowsnest.conf"
 MOONRAKER_CONF="${CONFIG_DIR}/moonraker.conf"
 MOONRAKER_ASVC="${DATA_DIR}/moonraker.asvc"
 
-CAM_DEVICE="/dev/video0"
+CAM_DEVICE_DEFAULT="/dev/video0"
+CAM_DEVICE="${CAM_DEVICE:-}"
 CAM_RESOLUTION="1920x1080"
 CAM_FPS="15"
 CAM_PORT="8080"
 
 ensure_dir "${CONFIG_DIR}"
+
+resolve_cam_device() {
+  local byid_dir="/dev/v4l/by-id"
+  local selected=""
+
+  if [ -n "${CAM_DEVICE}" ]; then
+    if [ -e "${CAM_DEVICE}" ] || [ -L "${CAM_DEVICE}" ]; then
+      log_info "Using CAM_DEVICE override: ${CAM_DEVICE}"
+      return 0
+    fi
+    log_warn "CAM_DEVICE override '${CAM_DEVICE}' not found; auto-detecting camera device"
+  fi
+
+  if [ -d "${byid_dir}" ]; then
+    selected="$(find "${byid_dir}" -maxdepth 1 -type l -name '*-video-index0' 2>/dev/null | sort | head -n 1 || true)"
+    if [ -z "${selected}" ]; then
+      selected="$(find "${byid_dir}" -maxdepth 1 -type l 2>/dev/null | sort | head -n 1 || true)"
+    fi
+  fi
+
+  if [ -n "${selected}" ]; then
+    CAM_DEVICE="${selected}"
+    log_info "Auto-selected camera device via /dev/v4l/by-id: ${CAM_DEVICE}"
+    return 0
+  fi
+
+  CAM_DEVICE="${CAM_DEVICE_DEFAULT}"
+  if [ -e "${CAM_DEVICE}" ] || [ -L "${CAM_DEVICE}" ]; then
+    log_warn "No /dev/v4l/by-id camera symlink found; using fallback ${CAM_DEVICE}"
+  else
+    log_warn "No camera device detected in /dev/v4l/by-id; fallback ${CAM_DEVICE} is also missing"
+  fi
+}
 
 remove_moonraker_section() {
   local section_name="$1"
@@ -126,6 +160,7 @@ apply_services() {
 
 
 upsert_moonraker_webcam_treed
+resolve_cam_device
 write_crowsnest_conf
 ensure_crowsnest_allowed_service
 chown "${PI_USER}:${PI_USER}" "${CROWSNEST_CONF}" || true

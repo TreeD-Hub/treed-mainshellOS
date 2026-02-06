@@ -19,6 +19,26 @@ failf() {
   fail=$((fail+1))
 }
 
+http_snapshot_check() {
+  local check_name="$1"
+  local url="$2"
+  local tmp code retries attempt
+  tmp="$(mktemp "/tmp/treed_verify_cam_XXXXXX.jpg")"
+  retries="${TREED_CAM_HTTP_RETRIES:-3}"
+  code=""
+  for attempt in $(seq 1 "${retries}"); do
+    code="$(curl -m "${TREED_CAM_HTTP_TIMEOUT:-8}" -sS -o "${tmp}" -w '%{http_code}' "${url}" || true)"
+    if [ "${code}" = "200" ] && [ -s "${tmp}" ]; then
+      pass "${check_name}"
+      rm -f "${tmp}"
+      return 0
+    fi
+    sleep 1
+  done
+  failf "${check_name} (http=${code:-n/a})"
+  rm -f "${tmp}"
+}
+
 # Гарантируем BOOT_DIR / CMDLINE_FILE / CONFIG_FILE даже при ручном запуске
 if [ -z "${BOOT_DIR:-}" ]; then
   BOOT_DIR="$(detect_boot_dir)"
@@ -152,6 +172,90 @@ if [ "${gm:-0}" -ge 96 ]; then
   pass "gpu_mem >= 96"
 else
   failf "gpu_mem >= 96"
+fi
+
+TREED_VERIFY_CAMERA="${TREED_VERIFY_CAMERA:-1}"
+if [ "${TREED_VERIFY_CAMERA}" = "1" ]; then
+  PI_USER="${PI_USER:-pi}"
+  PI_HOME="${PI_HOME:-/home/${PI_USER}}"
+  CAM_BIN_DIR="${PI_HOME}/treed/cam/bin"
+  CROWSNEST_CFG="${PI_HOME}/printer_data/config/crowsnest.conf"
+  MOONRAKER_CFG="${PI_HOME}/printer_data/config/moonraker.conf"
+  WEBCAM_API_URL="http://127.0.0.1:7125/server/webcams/list"
+  byid_index0_available=0
+  if find /dev/v4l/by-id -maxdepth 1 -type l -name '*-video-index0' -print -quit 2>/dev/null | grep -q .; then
+    byid_index0_available=1
+  fi
+
+  for f in session_start.sh snapshot.sh session_stop.sh; do
+    if [ -x "${CAM_BIN_DIR}/${f}" ]; then
+      pass "cam script executable ${CAM_BIN_DIR}/${f}"
+    else
+      failf "cam script executable ${CAM_BIN_DIR}/${f}"
+    fi
+  done
+
+  if [ -f "${MOONRAKER_CFG}" ] \
+    && grep -qE '^\[webcam treed\]\s*$' "${MOONRAKER_CFG}" \
+    && grep -qE '^[[:space:]]*service[[:space:]]*[:=][[:space:]]*mjpegstreamer[[:space:]]*$' "${MOONRAKER_CFG}"; then
+    pass "moonraker webcam treed service=mjpegstreamer"
+  else
+    failf "moonraker webcam treed service=mjpegstreamer"
+  fi
+
+  if [ -f "${CROWSNEST_CFG}" ]; then
+    cam_device_cfg="$(
+      awk '
+        /^[[:space:]]*device[[:space:]]*:/ {
+          v = substr($0, index($0, ":") + 1)
+          gsub(/^[[:space:]]+|[[:space:]]+$/, "", v)
+          print v
+          exit
+        }
+      ' "${CROWSNEST_CFG}"
+    )"
+
+    if [ -n "${cam_device_cfg}" ]; then
+      pass "crowsnest camera device configured (${cam_device_cfg})"
+      if [ -e "${cam_device_cfg}" ] || [ -L "${cam_device_cfg}" ]; then
+        pass "crowsnest camera device exists (${cam_device_cfg})"
+      else
+        failf "crowsnest camera device exists (${cam_device_cfg})"
+      fi
+    else
+      failf "crowsnest camera device configured"
+    fi
+
+    if [ "${byid_index0_available}" = "1" ]; then
+      if printf '%s' "${cam_device_cfg:-}" | grep -qE '^/dev/v4l/by-id/.+-video-index0$'; then
+        pass "crowsnest prefers /dev/v4l/by-id/*-video-index0"
+      else
+        failf "crowsnest prefers /dev/v4l/by-id/*-video-index0"
+      fi
+    else
+      pass "no /dev/v4l/by-id/*-video-index0 on host (fallback allowed)"
+    fi
+  else
+    failf "crowsnest config present (${CROWSNEST_CFG})"
+  fi
+
+  if command -v curl >/dev/null 2>&1; then
+    http_snapshot_check "camera direct snapshot :8080" "http://127.0.0.1:8080/?action=snapshot"
+    http_snapshot_check "camera proxied snapshot /webcam" "http://127.0.0.1/webcam/?action=snapshot"
+
+    webcams_json="$(curl -m "${TREED_CAM_HTTP_TIMEOUT:-8}" -sS "${WEBCAM_API_URL}" || true)"
+    if printf '%s' "${webcams_json}" | grep -qE '"name"[[:space:]]*:[[:space:]]*"treed"' \
+      && printf '%s' "${webcams_json}" | grep -qE '"service"[[:space:]]*:[[:space:]]*"mjpegstreamer"' \
+      && printf '%s' "${webcams_json}" | grep -qE '"stream_url"[[:space:]]*:[[:space:]]*"/webcam/\?action=stream"'; then
+      pass "moonraker webcams api treed entry"
+    else
+      failf "moonraker webcams api treed entry"
+    fi
+  else
+    failf "curl installed for camera checks"
+  fi
+else
+  log_info "VERIFY camera checks skipped (TREED_VERIFY_CAMERA=0)"
 fi
 
 if [ "${fail}" -eq 0 ]; then
