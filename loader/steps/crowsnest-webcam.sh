@@ -5,7 +5,7 @@ REPO_DIR="${REPO_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
 LIB_DIR="${REPO_DIR}/loader/lib"
 source "${LIB_DIR}/common.sh"
 
-log_info "Step crowsnest-webcam: fixed 1920x1080 for single USB cam"
+log_info "Step crowsnest-webcam: fixed 640x480@10 for single USB cam"
 
 PI_USER="${PI_USER:-pi}"
 PI_HOME="${PI_HOME:-/home/${PI_USER}}"
@@ -18,8 +18,14 @@ MOONRAKER_ASVC="${DATA_DIR}/moonraker.asvc"
 
 CAM_DEVICE_DEFAULT="/dev/video0"
 CAM_DEVICE="${CAM_DEVICE:-}"
-CAM_RESOLUTION="1920x1080"
-CAM_FPS="15"
+# Keep this conservative on purpose:
+# - Higher camera modes previously triggered unstable USB behavior on this setup
+#   (UVC -32/-71 bursts), which can cascade into CH341 MCU link drops.
+# - 640x480@10 keeps webcam usable in KS/Mainsail while preserving printer stability.
+# Do not increase without re-validating long-run stability and improving USB topology/power
+# (camera via powered hub, MCU on dedicated/direct port).
+CAM_RESOLUTION="640x480"
+CAM_FPS="10"
 CAM_PORT="8080"
 
 ensure_dir "${CONFIG_DIR}"
@@ -114,7 +120,7 @@ write_crowsnest_conf() {
   log_info "Writing crowsnest.conf -> ${CROWSNEST_CONF}"
   cat > "${CROWSNEST_CONF}" <<EOF
 #### treed-managed: crowsnest-webcam
-#### single USB cam, fixed 1920x1080, force MJPG path via ustreamer JPEG/HW
+#### single USB cam, fixed 640x480@10 for stability on shared USB bus
 
 [crowsnest]
 log_path: ${PI_HOME}/printer_data/logs/crowsnest.log
