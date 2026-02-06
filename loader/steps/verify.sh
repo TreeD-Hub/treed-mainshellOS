@@ -39,6 +39,31 @@ http_snapshot_check() {
   rm -f "${tmp}"
 }
 
+moonraker_webcams_check() {
+  local check_name="$1"
+  local url="$2"
+  local tmp code retries attempt
+  tmp="$(mktemp "/tmp/treed_verify_webcams_XXXXXX.json")"
+  retries="${TREED_MOONRAKER_HTTP_RETRIES:-15}"
+  code=""
+
+  for attempt in $(seq 1 "${retries}"); do
+    code="$(curl -m "${TREED_CAM_HTTP_TIMEOUT:-8}" -s -o "${tmp}" -w '%{http_code}' "${url}" || true)"
+    if [ "${code}" = "200" ] \
+      && grep -qE '"name"[[:space:]]*:[[:space:]]*"treed"' "${tmp}" \
+      && grep -qE '"service"[[:space:]]*:[[:space:]]*"mjpegstreamer"' "${tmp}" \
+      && grep -qE '"stream_url"[[:space:]]*:[[:space:]]*"/webcam/\?action=stream"' "${tmp}"; then
+      pass "${check_name}"
+      rm -f "${tmp}"
+      return 0
+    fi
+    sleep 1
+  done
+
+  failf "${check_name} (http=${code:-n/a})"
+  rm -f "${tmp}"
+}
+
 # Гарантируем BOOT_DIR / CMDLINE_FILE / CONFIG_FILE даже при ручном запуске
 if [ -z "${BOOT_DIR:-}" ]; then
   BOOT_DIR="$(detect_boot_dir)"
@@ -242,15 +267,7 @@ if [ "${TREED_VERIFY_CAMERA}" = "1" ]; then
   if command -v curl >/dev/null 2>&1; then
     http_snapshot_check "camera direct snapshot :8080" "http://127.0.0.1:8080/?action=snapshot"
     http_snapshot_check "camera proxied snapshot /webcam" "http://127.0.0.1/webcam/?action=snapshot"
-
-    webcams_json="$(curl -m "${TREED_CAM_HTTP_TIMEOUT:-8}" -sS "${WEBCAM_API_URL}" || true)"
-    if printf '%s' "${webcams_json}" | grep -qE '"name"[[:space:]]*:[[:space:]]*"treed"' \
-      && printf '%s' "${webcams_json}" | grep -qE '"service"[[:space:]]*:[[:space:]]*"mjpegstreamer"' \
-      && printf '%s' "${webcams_json}" | grep -qE '"stream_url"[[:space:]]*:[[:space:]]*"/webcam/\?action=stream"'; then
-      pass "moonraker webcams api treed entry"
-    else
-      failf "moonraker webcams api treed entry"
-    fi
+    moonraker_webcams_check "moonraker webcams api treed entry" "${WEBCAM_API_URL}"
   else
     failf "curl installed for camera checks"
   fi
