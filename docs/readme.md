@@ -1,4 +1,6 @@
-```bash только клиппер
+> Current canonical config ownership model: `docs/config-ownership.md`.
+
+```bash # klipper-only install path
 set -euo pipefail
 REPO_URL="https://github.com/TreeD-Hub/treed-mainshellOS.git"
 BRANCH="dev-cam"
@@ -18,6 +20,4 @@ find loader/steps -type f -name '*.sh' -exec chmod +x {} +
 
 sudo bash loader/loader.sh
 sudo reboot
-
 ```
-

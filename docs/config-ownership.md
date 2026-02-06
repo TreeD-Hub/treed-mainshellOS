@@ -1,0 +1,66 @@
+# TreeD MainshellOS: Canonical Config Model and Ownership
+
+This document fixes the current (actual) configuration model used by the active loader pipeline.
+Date: 2026-02-06.
+
+## 1) Active pipeline
+
+Entry point:
+- `loader/loader.sh`
+
+Order (config-related part):
+1. `loader/steps/klipper-sync.sh`
+2. `loader/steps/klipper-profiles.sh`
+3. `loader/steps/klipper-core.sh`
+4. `loader/steps/moonraker-config.sh`
+5. `loader/steps/crowsnest-webcam.sh`
+
+## 2) Canonical Klipper model
+
+Source of truth in repo:
+- `klipper/printer.cfg`
+- `klipper/profiles/rn12_hbot_v1/*.cfg`
+
+Staging path:
+- `/home/pi/treed/klipper`
+
+Runtime path:
+- `/home/pi/printer_data/config`
+
+Important:
+- Runtime `printer.cfg` is deployed from repo `klipper/printer.cfg` via `klipper-core` full-tree copy.
+- Current active profile is `rn12_hbot_v1`.
+- There is no active `printer_root.cfg`/`root.cfg` chain in this repository state.
+
+## 3) Ownership map (runtime)
+
+- Managed by repo + loader:
+  - `/home/pi/printer_data/config/printer.cfg`
+  - `/home/pi/printer_data/config/profiles/*`
+  - `/home/pi/printer_data/config/moonraker.conf`
+  - `/home/pi/printer_data/config/.theme/*`
+
+- Local overrides preserved by loader (`klipper-core`):
+  - `local_overrides.cfg`
+  - `moonraker.conf` (temporarily preserved, then overwritten by `moonraker-config` step)
+  - `mainsail.cfg`
+  - `timelapse.cfg`
+  - `crowsnest.conf`
+  - `KlipperScreen.conf`
+  - `sonar.conf`
+
+## 4) Camera integration ownership
+
+Repo source:
+- `scripts/treed-cam/*.sh`
+- `moonraker/components/treed_shell_command.py`
+
+Runtime:
+- `/home/pi/treed/cam/bin/*.sh`
+- Moonraker component directory (discovered by `moonraker-config`)
+- `/home/pi/printer_data/config/crowsnest.conf`
+
+## 5) Legacy notes
+
+Legacy files/scripts can still exist in repo, but active behavior is defined by `loader/loader.sh` step list only.
+If docs contradict runtime behavior, this document is canonical.

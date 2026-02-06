@@ -186,26 +186,26 @@ usb-1a86_USB_Serial-if00-port0 -> ../../ttyUSB0
 - `printer.cfg` в рантайме (`/home/pi/printer_data/config/printer.cfg`) содержит:
 
   ```ini
-  [include /home/pi/treed/klipper/printer_root.cfg]
+  [include profiles/rn12_hbot_v1/mcu_rn12.cfg]
   ```
 
-- `printer_root.cfg` в свою очередь подключает текущий профиль:
+- `klipper/printer.cfg` в свою очередь подключает текущий профиль:
 
   ```ini
-  [include profiles/current/root.cfg]
+  # include-chain см. klipper/printer.cfg (profiles/rn12_hbot_v1/*.cfg)
   ```
 
 Минимальный профиль под RN12 — `rn12_hbot_v1`.  
 Его файл:
 
 ```text
-/home/pi/treed/klipper/profiles/rn12_hbot_v1/root.cfg
+/home/pi/printer_data/config/profiles/rn12_hbot_v1/mcu_rn12.cfg
 ```
 
 Открываем его (через SSH и `nano` или `less`):
 
 ```bash
-nano /home/pi/treed/klipper/profiles/rn12_hbot_v1/root.cfg
+nano /home/pi/printer_data/config/profiles/rn12_hbot_v1/mcu_rn12.cfg
 ```
 
 Содержимое (минимальный вариант) должно выглядеть так:
@@ -227,14 +227,9 @@ square_corner_velocity: 5.0
 1. Подставляем **свой** путь в строку `serial: ...`.
 2. Сохраняем файл (`Ctrl+O`, Enter, `Ctrl+X` в nano).
 
-> Альтернатива: при необходимости можно пересоздать профиль автоматически через скрипт:
->
-> ```bash
-> cd /home/pi/treed/.staging/treed-mainshellOS
-> ./loader/klipper-config.sh
-> ```
->
-> Он возьмёт первый путь из `/dev/serial/by-id/*` и перезапишет `[mcu]` и `[printer]` в `rn12_hbot_v1/root.cfg`, а также корректно настроит `printer.cfg`. Обычно ручного правления достаточно, но при смене платы или USB-адаптера утилита удобна.
+> Рекомендуемый путь: править `serial` напрямую в
+> `/home/pi/printer_data/config/profiles/rn12_hbot_v1/mcu_rn12.cfg`
+> и затем перезапускать `klipper`.
 
 ---
 
@@ -281,3 +276,6 @@ Stats ... bytes_write=... bytes_read=...
 - добавлять оси и кинематику H-bot/конвейера,
 - описывать TMC2209, хотэнд, стол, вентиляторы,
 - подключать макросы и профили под задачи фермы.
+
+
+> Актуальная модель конфигов и ownership: docs/config-ownership.md.

@@ -58,7 +58,6 @@ export CONFIG_FILE
 
 
 . "${REPO_DIR}/loader/lib/plymouth.sh"
-. "${REPO_DIR}/loader/lib/klipper.sh"
 
 trap 'rc=$?; log_error "FAILED step=${CURRENT_STEP:-unknown} rc=${rc} line=${BASH_LINENO[0]} cmd=${BASH_COMMAND}"; exit ${rc}' ERR
 
@@ -80,7 +79,7 @@ STEPS=(
   "crowsnest-webcam"
   "treed-cam"
   "klipper-mainsail-theme"
-  #"klipperscreen-install"
+  "klipperscreen-install"
   "klipperscreen-integr"
   "verify"
 )
