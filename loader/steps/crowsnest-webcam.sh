@@ -144,7 +144,7 @@ ensure_crowsnest_allowed_service() {
 }
 
 apply_services() {
-  if systemctl list-unit-files --no-pager 2>/dev/null | grep -qE '^crowsnest\.service'; then
+  if systemctl cat crowsnest.service >/dev/null 2>&1; then
     log_info "Enabling and restarting crowsnest"
     systemctl enable crowsnest.service >/dev/null 2>&1 || true
     systemctl restart crowsnest.service
@@ -152,9 +152,25 @@ apply_services() {
     log_warn "crowsnest.service not found; skipping restart"
   fi
 
-  if systemctl list-unit-files --no-pager 2>/dev/null | grep -qE '^moonraker\.service'; then
+  if systemctl cat moonraker.service >/dev/null 2>&1; then
     log_info "Restarting moonraker"
-    systemctl restart moonraker
+    systemctl restart moonraker.service
+    if command -v curl >/dev/null 2>&1; then
+      local retries="${MOONRAKER_READY_RETRIES:-30}"
+      local code=""
+      local attempt
+      for attempt in $(seq 1 "${retries}"); do
+        code="$(curl -m 2 -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:7125/server/info" || true)"
+        if [ "${code}" = "200" ]; then
+          log_info "Moonraker API is ready on 127.0.0.1:7125"
+          return 0
+        fi
+        sleep 1
+      done
+      log_warn "Moonraker API not ready after ${retries}s (last_http=${code:-n/a})"
+    fi
+  else
+    log_warn "moonraker.service not found; skipping restart"
   fi
 }
 

@@ -44,7 +44,7 @@ moonraker_webcams_check() {
   local url="$2"
   local tmp code retries attempt
   tmp="$(mktemp "/tmp/treed_verify_webcams_XXXXXX.json")"
-  retries="${TREED_MOONRAKER_HTTP_RETRIES:-15}"
+  retries="${TREED_MOONRAKER_HTTP_RETRIES:-30}"
   code=""
 
   for attempt in $(seq 1 "${retries}"); do
