@@ -59,13 +59,16 @@ Important:
 ## 4) Camera integration ownership
 
 Repo source:
-- `scripts/treed-cam/*.sh`
+- `runtime-scripts/treed-cam/*.sh`
 - `moonraker/components/treed_shell_command.py`
 
 Runtime:
 - `/home/pi/treed/cam/bin/*.sh`
 - Moonraker component directory (discovered by `moonraker-config`)
 - `/home/pi/printer_data/config/crowsnest.conf`
+
+Operator tools:
+- `tools/ops/*` (manual operator scripts, not used by loader pipeline)
 
 ## 5) Legacy notes
 
