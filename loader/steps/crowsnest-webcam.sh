@@ -14,6 +14,9 @@ CONFIG_DIR="${PI_HOME}/printer_data/config"
 DATA_DIR="${PI_HOME}/printer_data"
 CROWSNEST_CONF="${CONFIG_DIR}/crowsnest.conf"
 MOONRAKER_CONF="${CONFIG_DIR}/moonraker.conf"
+MOONRAKER_DIR="${CONFIG_DIR}/moonraker"
+MOONRAKER_GENERATED_DIR="${MOONRAKER_DIR}/generated"
+MOONRAKER_WEBCAM_FRAGMENT="${MOONRAKER_GENERATED_DIR}/50-webcam-treed.conf"
 MOONRAKER_ASVC="${DATA_DIR}/moonraker.asvc"
 
 CAM_DEVICE_DEFAULT="/dev/video0"
@@ -29,6 +32,7 @@ CAM_FPS="10"
 CAM_PORT="8080"
 
 ensure_dir "${CONFIG_DIR}"
+ensure_dir "${MOONRAKER_GENERATED_DIR}"
 
 resolve_cam_device() {
   local byid_dir="/dev/v4l/by-id"
@@ -63,47 +67,23 @@ resolve_cam_device() {
   fi
 }
 
-remove_moonraker_section() {
-  local section_name="$1"
-  local tmp
-  tmp="$(mktemp)"
-
-  awk -v sec="[""${section_name}""]" '
-    BEGIN { drop=0 }
-    {
-      if ($0 ~ /^\[/) {
-        if ($0 == sec) { drop=1; next }
-        drop=0
-      }
-      if (!drop) print
-    }
-  ' "${MOONRAKER_CONF}" > "${tmp}"
-
-  mv "${tmp}" "${MOONRAKER_CONF}"
-}
-
-upsert_moonraker_webcam_treed() {
+ensure_moonraker_generated_include() {
   if [[ ! -f "${MOONRAKER_CONF}" ]]; then
-    log_warn "moonraker.conf not found at ${MOONRAKER_CONF}; skipping webcam section ensure"
+    log_warn "moonraker.conf not found at ${MOONRAKER_CONF}; generated webcam fragment may be ignored"
     return 0
   fi
 
-  # Remove legacy/unwanted [webcam] section if it exists
-  if grep -qE '^\[webcam\]\s*$' "${MOONRAKER_CONF}"; then
-    log_info "Removing legacy [webcam] section from moonraker.conf"
-    remove_moonraker_section "webcam"
+  if grep -qE '^\[include[[:space:]]+moonraker/generated/\*\.conf\][[:space:]]*$' "${MOONRAKER_CONF}"; then
+    return 0
   fi
 
-  # Remove existing [webcam treed] to re-add cleanly (idempotent)
-  if grep -qE '^\[webcam treed\]\s*$' "${MOONRAKER_CONF}"; then
-    log_info "Replacing existing [webcam treed] section in moonraker.conf"
-    remove_moonraker_section "webcam treed"
-  else
-    log_info "Adding [webcam treed] section to moonraker.conf"
-  fi
+  log_warn "moonraker.conf is missing include [include moonraker/generated/*.conf]"
+}
 
-  cat >> "${MOONRAKER_CONF}" <<'EOF'
-
+write_moonraker_webcam_fragment() {
+  log_info "Writing Moonraker webcam fragment -> ${MOONRAKER_WEBCAM_FRAGMENT}"
+  cat > "${MOONRAKER_WEBCAM_FRAGMENT}" <<'EOF'
+#### treed-generated: crowsnest-webcam
 [webcam treed]
 location: printer
 service: mjpegstreamer
@@ -180,13 +160,13 @@ apply_services() {
   fi
 }
 
-
-upsert_moonraker_webcam_treed
+ensure_moonraker_generated_include
+write_moonraker_webcam_fragment
 resolve_cam_device
 write_crowsnest_conf
 ensure_crowsnest_allowed_service
 chown "${PI_USER}:${PI_USER}" "${CROWSNEST_CONF}" || true
-chown "${PI_USER}:${PI_USER}" "${MOONRAKER_CONF}" || true
+chown "${PI_USER}:${PI_USER}" "${MOONRAKER_WEBCAM_FRAGMENT}" || true
 chown "${PI_USER}:${PI_USER}" "${MOONRAKER_ASVC}" || true
 
 apply_services

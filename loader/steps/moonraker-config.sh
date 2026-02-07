@@ -8,10 +8,14 @@ log_info "Step moonraker-config: syncing Moonraker config"
 
 SRC_CONF="${REPO_DIR}/moonraker/moonraker.conf"
 DST_CONF="${PI_HOME}/printer_data/config/moonraker.conf"
+SRC_BASE_DIR="${REPO_DIR}/moonraker/base"
+DST_BASE_DIR="${PI_HOME}/printer_data/config/moonraker/base"
+DST_GENERATED_DIR="${PI_HOME}/printer_data/config/moonraker/generated"
 SRC_COMPONENT="${REPO_DIR}/moonraker/components/treed_shell_command.py"
 COMPONENT_NAME="treed_shell_command.py"
 
 CONFIG_DEPLOYED=0
+BASE_DEPLOYED=0
 COMPONENT_DEPLOYED=0
 
 ensure_moonraker_running() {
@@ -141,6 +145,32 @@ deploy_treed_shell_component() {
   log_info "Deployed Moonraker component to ${dst}"
 }
 
+deploy_base_fragments() {
+  if [ ! -d "${SRC_BASE_DIR}" ]; then
+    log_warn "Moonraker base fragments not found in repo: ${SRC_BASE_DIR}"
+    return 0
+  fi
+
+  rm -rf "${DST_BASE_DIR}"
+  ensure_dir "${DST_BASE_DIR}"
+  cp -a "${SRC_BASE_DIR}/." "${DST_BASE_DIR}/"
+  chown -R "${PI_USER}":"$(id -gn "${PI_USER}")" "${DST_BASE_DIR}" || true
+  BASE_DEPLOYED=1
+  log_info "Deployed Moonraker base fragments to ${DST_BASE_DIR}"
+}
+
+ensure_generated_fragments_dir() {
+  local placeholder=""
+  ensure_dir "${DST_GENERATED_DIR}"
+  placeholder="${DST_GENERATED_DIR}/00-placeholder.conf"
+  if [ ! -f "${placeholder}" ]; then
+    cat > "${placeholder}" <<'EOF'
+#### reserved for loader-generated moonraker fragments
+EOF
+  fi
+  chown -R "${PI_USER}":"$(id -gn "${PI_USER}")" "${DST_GENERATED_DIR}" || true
+}
+
 if [ ! -f "${SRC_CONF}" ]; then
   log_warn "Moonraker config not found in repo, skipping"
 else
@@ -151,9 +181,11 @@ else
   log_info "Deployed Moonraker config to ${DST_CONF}"
 fi
 
+deploy_base_fragments
+ensure_generated_fragments_dir
 deploy_treed_shell_component
 
-if [ "${CONFIG_DEPLOYED}" -eq 1 ] || [ "${COMPONENT_DEPLOYED}" -eq 1 ]; then
+if [ "${CONFIG_DEPLOYED}" -eq 1 ] || [ "${BASE_DEPLOYED}" -eq 1 ] || [ "${COMPONENT_DEPLOYED}" -eq 1 ]; then
   ensure_moonraker_running
   wait_moonraker_api_ready
 fi

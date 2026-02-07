@@ -206,6 +206,7 @@ if [ "${TREED_VERIFY_CAMERA}" = "1" ]; then
   CAM_BIN_DIR="${PI_HOME}/treed/cam/bin"
   CROWSNEST_CFG="${PI_HOME}/printer_data/config/crowsnest.conf"
   MOONRAKER_CFG="${PI_HOME}/printer_data/config/moonraker.conf"
+  MOONRAKER_WEBCAM_FRAGMENT="${PI_HOME}/printer_data/config/moonraker/generated/50-webcam-treed.conf"
   WEBCAM_API_URL="http://127.0.0.1:7125/server/webcams/list"
   byid_index0_available=0
   if find /dev/v4l/by-id -maxdepth 1 -type l -name '*-video-index0' -print -quit 2>/dev/null | grep -q .; then
@@ -220,10 +221,19 @@ if [ "${TREED_VERIFY_CAMERA}" = "1" ]; then
     fi
   done
 
-  if [ -f "${MOONRAKER_CFG}" ] \
+  webcam_cfg_source=""
+  if [ -f "${MOONRAKER_WEBCAM_FRAGMENT}" ] \
+    && grep -qE '^\[webcam treed\]\s*$' "${MOONRAKER_WEBCAM_FRAGMENT}" \
+    && grep -qE '^[[:space:]]*service[[:space:]]*[:=][[:space:]]*mjpegstreamer[[:space:]]*$' "${MOONRAKER_WEBCAM_FRAGMENT}"; then
+    webcam_cfg_source="${MOONRAKER_WEBCAM_FRAGMENT}"
+  elif [ -f "${MOONRAKER_CFG}" ] \
     && grep -qE '^\[webcam treed\]\s*$' "${MOONRAKER_CFG}" \
     && grep -qE '^[[:space:]]*service[[:space:]]*[:=][[:space:]]*mjpegstreamer[[:space:]]*$' "${MOONRAKER_CFG}"; then
-    pass "moonraker webcam treed service=mjpegstreamer"
+    webcam_cfg_source="${MOONRAKER_CFG}"
+  fi
+
+  if [ -n "${webcam_cfg_source}" ]; then
+    pass "moonraker webcam treed service=mjpegstreamer (${webcam_cfg_source})"
   else
     failf "moonraker webcam treed service=mjpegstreamer"
   fi
