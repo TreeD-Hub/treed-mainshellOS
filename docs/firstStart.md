@@ -268,7 +268,6 @@ sudo reboot
 - поднимает тему Mainsail (`mainsail/.theme` → `/home/pi/printer_data/config/.theme`);
 - копирует `klipper/` → `/home/pi/treed/klipper`;
 - прописывает `/home/pi/printer_data/config/printer.cfg` на `[include profiles/rn12_hbot_v1/mcu_rn12.cfg]` (если `klipper/printer.cfg` есть);
-- при наличии `switch_profile.sh` может переключить профиль (на RN12 это `rn12_hbot_v1`).
 
 ---
 

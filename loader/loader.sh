@@ -72,7 +72,7 @@ STEPS=(
   "plymouth-cmdline"
   "plymouth-systemd"
   "klipper-sync"        # репо -> ~/treed/klipper
-  "klipper-profiles"    # правим serial, current в staging
+  "klipper-profiles"    # fixed profile + serial update in staging
   "klipper-core"        # теперь КЛАДЁМ ВЕСЬ klipper/ в /config
   "klipper-anti-shutdown"
   "moonraker-config"

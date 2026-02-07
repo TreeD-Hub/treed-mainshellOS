@@ -30,6 +30,7 @@ Runtime path:
 Important:
 - Runtime `printer.cfg` is deployed from repo `klipper/printer.cfg` via `klipper-core` full-tree copy.
 - Current active profile is `rn12_hbot_v1`.
+- Dynamic `profiles/current` switching is not part of the active model.
 - There is no active `printer_root.cfg`/`root.cfg` chain in this repository state.
 
 ## 3) Ownership map (runtime)

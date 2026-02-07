@@ -23,7 +23,7 @@ Current Klipper entry point:
 ## Loader deploy flow
 
 1. `loader/steps/klipper-sync.sh` copies `klipper/` to staging at `/home/pi/treed/klipper`.
-2. `loader/steps/klipper-profiles.sh` updates `serial:` in `mcu_rn12.cfg` and fixes profile to `rn12_hbot_v1`.
+2. `loader/steps/klipper-profiles.sh` updates `serial:` in `mcu_rn12.cfg` for fixed profile `rn12_hbot_v1`.
 3. `loader/steps/klipper-core.sh` copies full staging tree to runtime `/home/pi/printer_data/config`.
 
 ## Local overrides

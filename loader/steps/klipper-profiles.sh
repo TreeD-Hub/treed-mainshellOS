@@ -9,7 +9,7 @@ PROFILE_NAME="rn12_hbot_v1"
 PROFILE_DIR="${PROFILES_DIR}/${PROFILE_NAME}"
 MCU_CFG="${PROFILE_DIR}/mcu_rn12.cfg"
 
-log_info "Step klipper-profiles: switching to profile ${PROFILE_NAME} and updating serial"
+log_info "Step klipper-profiles: fixed profile ${PROFILE_NAME}, update MCU serial"
 
 if [ ! -d "${KLIPPER_DIR}" ] || [ ! -f "${KLIPPER_DIR}/printer.cfg" ] || [ ! -d "${PROFILES_DIR}" ]; then
   log_error "klipper-profiles: staging missing or incomplete: ${KLIPPER_DIR}"
@@ -79,11 +79,6 @@ else
   sed -i -E "s|^([[:space:]]*serial:[[:space:]]*)[^[:space:]#]+(.*)$|\\1${SERIAL_PATH}\\2|" "${MCU_CFG}"
   log_info "Updated MCU serial in ${MCU_CFG} to ${SERIAL_PATH}"
 fi
-
-cd "${PROFILES_DIR}"
-rm -f current
-ln -s "${PROFILE_NAME}" current
-log_info "Set current profile symlink to ${PROFILE_NAME}"
 
 if [ -z "${PI_USER:-}" ]; then
   log_error "klipper-profiles: PI_USER is not set"

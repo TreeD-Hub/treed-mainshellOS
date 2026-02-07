@@ -69,16 +69,6 @@ fi
 # Гарантируем наличие local_overrides.cfg
 [ -f "${CONFIG_DIR}/local_overrides.cfg" ] || touch "${CONFIG_DIR}/local_overrides.cfg"
 
-# Avoid inotify watch overlap in Moonraker:
-# if profiles/current is a symlink to an in-tree profile directory, Moonraker may
-# try to watch the same real path twice under the same root.
-CURRENT_PROFILE_MARKER="${CONFIG_DIR}/profiles/current"
-if [ -L "${CURRENT_PROFILE_MARKER}" ]; then
-  current_target="$(readlink "${CURRENT_PROFILE_MARKER}" 2>/dev/null || true)"
-  rm -f "${CURRENT_PROFILE_MARKER}"
-  printf '%s\n' "${current_target:-rn12_hbot_v1}" > "${CURRENT_PROFILE_MARKER}"
-  log_info "klipper-core: replaced profiles/current symlink with marker file (${current_target:-rn12_hbot_v1})"
-fi
 
 # Никаких лишних каталогов в runtime
 rm -rf "${CONFIG_DIR}/treed" || true
