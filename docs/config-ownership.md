@@ -63,5 +63,6 @@ Runtime:
 
 ## 5) Legacy notes
 
-Legacy files/scripts can still exist in repo, but active behavior is defined by `loader/loader.sh` step list only.
+Deprecated loader steps are removed from active tree; `loader/steps/` contains only active pipeline scripts.
+`loader/steps/klipperscreen-install.sh` is an active install step used for clean board provisioning.
 If docs contradict runtime behavior, this document is canonical.
