@@ -104,7 +104,7 @@ CMDLINE_PATH="${CMDLINE_FILE:-<empty>}"
 if [ -n "${CMDLINE_FILE:-}" ] && [ -f "${CMDLINE_FILE}" ]; then
   CMDLINE_CONTENT="$(tr -d '\n' < "${CMDLINE_FILE}" 2>/dev/null || true)"
 
-  for tok in quiet splash plymouth.ignore-serial-consoles logo.nologo vt.global_cursor_default=0 consoleblank=0 loglevel=3 vt.handoff=7; do
+  for tok in quiet splash plymouth.ignore-serial-consoles logo.nologo vt.global_cursor_default=0 consoleblank=0 loglevel=3 vt.handoff=7 usbcore.autosuspend=-1; do
     if printf '%s\n' "${CMDLINE_CONTENT}" | grep -qE "(^| )${tok}( |$)"; then
       pass "cmdline token ${tok}"
     else
