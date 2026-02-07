@@ -2,6 +2,7 @@
 
 This document fixes the current (actual) configuration model used by the active loader pipeline.
 Date: 2026-02-06.
+Root entry doc: `README.md`.
 
 ## 1) Active pipeline
 

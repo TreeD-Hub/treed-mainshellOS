@@ -1,3 +1,4 @@
+> Root project map: `README.md`
 > Current canonical config ownership model: `docs/config-ownership.md`.
 
 ```bash # klipper-only install path

@@ -330,4 +330,5 @@ git pull
 и перезапусти `klipper`.
 
 
-> Актуальная модель конфигов и ownership: docs/config-ownership.md.
+> Карта слоев и ownership: `README.md`
+> Актуальная модель конфигов и ownership: `docs/config-ownership.md`.
