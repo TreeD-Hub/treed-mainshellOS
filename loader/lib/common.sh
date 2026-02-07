@@ -45,16 +45,6 @@ backup_file_once() {
   fi
 }
 
-ensure_package() {
-  local pkg="$1"
-  if ! dpkg -s "$pkg" >/dev/null 2>&1; then
-    log_info "Installing package: ${pkg}"
-    DEBIAN_FRONTEND=noninteractive apt-get -y install "$pkg"
-  else
-    log_info "Package already installed: ${pkg}"
-  fi
-}
-
 pi_primary_group() {
   local user="${1:-}"
   local grp=""

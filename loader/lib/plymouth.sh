@@ -4,19 +4,6 @@ set -euo pipefail
 . "${REPO_DIR}/loader/lib/common.sh"
 
 PLYMOUTH_THEME_NAME="${PLYMOUTH_THEME_NAME:-treed}"
-PLYMOUTH_SOURCE_DIR="${REPO_DIR}/plymouth/theme/${PLYMOUTH_THEME_NAME}"
-PLYMOUTH_TARGET_DIR="/usr/share/plymouth/themes/${PLYMOUTH_THEME_NAME}"
-
-plymouth_install_theme_files() {
-  if [ ! -d "${PLYMOUTH_SOURCE_DIR}" ]; then
-    log_error "Plymouth source theme not found: ${PLYMOUTH_SOURCE_DIR}"
-    exit 1
-  fi
-
-  ensure_dir "${PLYMOUTH_TARGET_DIR}"
-  rsync -a --delete "${PLYMOUTH_SOURCE_DIR}/" "${PLYMOUTH_TARGET_DIR}/"
-  log_info "Installed plymouth theme files to ${PLYMOUTH_TARGET_DIR}"
-}
 
 plymouth_set_default_theme() {
   if command -v plymouth-set-default-theme >/dev/null 2>&1; then
@@ -36,33 +23,4 @@ plymouth_rebuild_initramfs() {
   else
     log_warn "update-initramfs not found; skipping initramfs rebuild"
   fi
-}
-
-normalize_cmdline() {
-  local file
-  file="${1:-${CMDLINE_FILE:-}}"
-
-  if [ -z "$file" ] || [ ! -f "$file" ]; then
-    log_warn "normalize_cmdline: cmdline file not found: ${file}"
-    return 0
-  fi
-
-  local line
-  line="$(tr -d '\n' < "$file")"
-  line=" $line "
-
-  line="$(printf '%s' "$line" | sed -E 's/(^| )nosplash( |$)/ /g')"
-  line="$(printf '%s' "$line" | sed -E 's/(^| )plymouth\.enable=0( |$)/ /g')"
-
-  for opt in quiet splash plymouth.ignore-serial-consoles logo.nologo vt.global_cursor_default=0; do
-    case " $line " in
-      *" $opt "*) ;;
-      *) line="$line $opt" ;;
-    esac
-  done
-
-  line="$(printf '%s\n' "$line" | tr -s ' ' | sed 's/^ //; s/ $//')"
-  printf '%s\n' "$line" > "$file"
-
-  log_info "normalize_cmdline: updated ${file}"
 }

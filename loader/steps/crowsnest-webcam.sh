@@ -39,35 +39,61 @@ ensure_dir "${MOONRAKER_GENERATED_DIR}"
 
 resolve_cam_device() {
   local byid_dir="/dev/v4l/by-id"
-  local selected=""
+  local allow_video0_fallback="${CAM_ALLOW_VIDEO0_FALLBACK:-0}"
+  local -a candidates=()
+  local candidate=""
 
   if [ -n "${CAM_DEVICE}" ]; then
     if [ -e "${CAM_DEVICE}" ] || [ -L "${CAM_DEVICE}" ]; then
       log_info "Using CAM_DEVICE override: ${CAM_DEVICE}"
       return 0
     fi
-    log_warn "CAM_DEVICE override '${CAM_DEVICE}' not found; auto-detecting camera device"
+    log_error "CAM_DEVICE override '${CAM_DEVICE}' not found"
+    exit 1
   fi
 
   if [ -d "${byid_dir}" ]; then
-    selected="$(find "${byid_dir}" -maxdepth 1 -type l -name '*-video-index0' 2>/dev/null | sort | head -n 1 || true)"
-    if [ -z "${selected}" ]; then
-      selected="$(find "${byid_dir}" -maxdepth 1 -type l 2>/dev/null | sort | head -n 1 || true)"
+    mapfile -t candidates < <(find "${byid_dir}" -maxdepth 1 -type l -name '*-video-index0' 2>/dev/null | sort)
+    if [ "${#candidates[@]}" -eq 1 ]; then
+      CAM_DEVICE="${candidates[0]}"
+      log_info "Auto-selected camera device via /dev/v4l/by-id: ${CAM_DEVICE}"
+      return 0
+    fi
+    if [ "${#candidates[@]}" -gt 1 ]; then
+      log_error "Multiple /dev/v4l/by-id/*-video-index0 cameras detected; set CAM_DEVICE explicitly"
+      for candidate in "${candidates[@]}"; do
+        log_error "camera candidate: ${candidate}"
+      done
+      exit 1
+    fi
+
+    mapfile -t candidates < <(find "${byid_dir}" -maxdepth 1 -type l 2>/dev/null | sort)
+    if [ "${#candidates[@]}" -eq 1 ]; then
+      CAM_DEVICE="${candidates[0]}"
+      log_info "Auto-selected camera device via /dev/v4l/by-id: ${CAM_DEVICE}"
+      return 0
+    fi
+    if [ "${#candidates[@]}" -gt 1 ]; then
+      log_error "Multiple cameras detected in /dev/v4l/by-id; set CAM_DEVICE explicitly"
+      for candidate in "${candidates[@]}"; do
+        log_error "camera candidate: ${candidate}"
+      done
+      exit 1
     fi
   fi
 
-  if [ -n "${selected}" ]; then
-    CAM_DEVICE="${selected}"
-    log_info "Auto-selected camera device via /dev/v4l/by-id: ${CAM_DEVICE}"
-    return 0
+  if [ "${allow_video0_fallback}" = "1" ]; then
+    CAM_DEVICE="${CAM_DEVICE_DEFAULT}"
+    if [ -e "${CAM_DEVICE}" ] || [ -L "${CAM_DEVICE}" ]; then
+      log_warn "No unique /dev/v4l/by-id camera found; using fallback ${CAM_DEVICE}"
+      return 0
+    fi
+    log_error "CAM_ALLOW_VIDEO0_FALLBACK=1 but fallback device is missing: ${CAM_DEVICE}"
+    exit 1
   fi
 
-  CAM_DEVICE="${CAM_DEVICE_DEFAULT}"
-  if [ -e "${CAM_DEVICE}" ] || [ -L "${CAM_DEVICE}" ]; then
-    log_warn "No /dev/v4l/by-id camera symlink found; using fallback ${CAM_DEVICE}"
-  else
-    log_warn "No camera device detected in /dev/v4l/by-id; fallback ${CAM_DEVICE} is also missing"
-  fi
+  log_error "Cannot resolve unique camera in /dev/v4l/by-id; set CAM_DEVICE or CAM_ALLOW_VIDEO0_FALLBACK=1"
+  exit 1
 }
 
 ensure_moonraker_generated_include() {
@@ -164,8 +190,8 @@ apply_services() {
 }
 
 ensure_moonraker_generated_include
-write_moonraker_webcam_fragment
 resolve_cam_device
+write_moonraker_webcam_fragment
 write_crowsnest_conf
 ensure_crowsnest_allowed_service
 chown "${PI_USER}:${grp}" "${CROWSNEST_CONF}" || true

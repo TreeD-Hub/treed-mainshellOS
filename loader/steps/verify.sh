@@ -221,21 +221,28 @@ if [ "${TREED_VERIFY_CAMERA}" = "1" ]; then
     fi
   done
 
-  webcam_cfg_source=""
   if [ -f "${MOONRAKER_WEBCAM_FRAGMENT}" ] \
     && grep -qE '^\[webcam treed\]\s*$' "${MOONRAKER_WEBCAM_FRAGMENT}" \
     && grep -qE '^[[:space:]]*service[[:space:]]*[:=][[:space:]]*mjpegstreamer[[:space:]]*$' "${MOONRAKER_WEBCAM_FRAGMENT}"; then
-    webcam_cfg_source="${MOONRAKER_WEBCAM_FRAGMENT}"
-  elif [ -f "${MOONRAKER_CFG}" ] \
-    && grep -qE '^\[webcam treed\]\s*$' "${MOONRAKER_CFG}" \
-    && grep -qE '^[[:space:]]*service[[:space:]]*[:=][[:space:]]*mjpegstreamer[[:space:]]*$' "${MOONRAKER_CFG}"; then
-    webcam_cfg_source="${MOONRAKER_CFG}"
+    pass "moonraker webcam treed service=mjpegstreamer (${MOONRAKER_WEBCAM_FRAGMENT})"
+  else
+    failf "moonraker webcam treed service=mjpegstreamer (${MOONRAKER_WEBCAM_FRAGMENT})"
   fi
 
-  if [ -n "${webcam_cfg_source}" ]; then
-    pass "moonraker webcam treed service=mjpegstreamer (${webcam_cfg_source})"
+  if [ -f "${MOONRAKER_CFG}" ]; then
+    if grep -qE '^\[include[[:space:]]+moonraker/generated/\*\.conf\][[:space:]]*$' "${MOONRAKER_CFG}"; then
+      pass "moonraker include generated/*.conf"
+    else
+      failf "moonraker include generated/*.conf"
+    fi
+
+    if grep -qE '^\[webcam treed\][[:space:]]*$' "${MOONRAKER_CFG}"; then
+      failf "moonraker root config should not contain [webcam treed]"
+    else
+      pass "moonraker root config has no [webcam treed]"
+    fi
   else
-    failf "moonraker webcam treed service=mjpegstreamer"
+    failf "moonraker config present (${MOONRAKER_CFG})"
   fi
 
   if [ -f "${CROWSNEST_CFG}" ]; then

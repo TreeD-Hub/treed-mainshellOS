@@ -48,48 +48,6 @@ validate_repo_moonraker_layout() {
   fi
 }
 
-ensure_moonraker_running() {
-  if ! systemctl cat moonraker.service >/dev/null 2>&1; then
-    log_warn "moonraker.service not found; skipping restart/start"
-    return 0
-  fi
-
-  log_info "Ensuring moonraker.service is running"
-  systemctl enable moonraker.service >/dev/null 2>&1 || true
-  if ! systemctl restart moonraker.service; then
-    log_warn "Restart moonraker.service failed; trying start"
-    systemctl start moonraker.service || true
-  fi
-}
-
-wait_moonraker_api_ready() {
-  local retries="${MOONRAKER_READY_RETRIES:-30}"
-  local code=""
-  local attempt
-
-  if ! systemctl cat moonraker.service >/dev/null 2>&1; then
-    log_warn "moonraker.service not found; skip moonraker API readiness wait"
-    return 0
-  fi
-
-  if ! command -v curl >/dev/null 2>&1; then
-    log_warn "curl not found; skip moonraker API readiness wait"
-    return 0
-  fi
-
-  for attempt in $(seq 1 "${retries}"); do
-    code="$(curl -m 2 -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:7125/server/info" || true)"
-    if [ "${code}" = "200" ]; then
-      log_info "Moonraker API is ready on 127.0.0.1:7125"
-      return 0
-    fi
-    sleep 1
-  done
-
-  log_error "Moonraker API did not become ready after ${retries}s (last_http=${code:-n/a})"
-  return 1
-}
-
 find_moonraker_components_dir() {
   local py_path=""
   local candidate=""
@@ -194,10 +152,8 @@ prune_treed_generated_fragments() {
       00-placeholder.conf) continue ;;
     esac
 
-    if grep -qE '^####[[:space:]]+treed-generated:' "${file}" || [[ "$(basename "${file}")" == *-treed.conf ]]; then
-      rm -f "${file}"
-      log_info "Removed stale treed generated fragment: ${file}"
-    fi
+    rm -f "${file}"
+    log_info "Removed stale generated fragment: ${file}"
   done < <(find "${DST_GENERATED_DIR}" -maxdepth 1 -type f -name '*.conf' -print0 2>/dev/null)
 }
 
@@ -227,8 +183,7 @@ ensure_generated_fragments_dir
 deploy_treed_shell_component
 
 if [ "${CONFIG_DEPLOYED}" -eq 1 ] || [ "${BASE_DEPLOYED}" -eq 1 ] || [ "${COMPONENT_DEPLOYED}" -eq 1 ]; then
-  ensure_moonraker_running
-  wait_moonraker_api_ready
+  log_info "Moonraker restart is deferred to step crowsnest-webcam"
 fi
 
 log_info "moonraker-config: OK"

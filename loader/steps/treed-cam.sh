@@ -28,7 +28,7 @@ if [[ ! -d "${SRC_DIR}" ]]; then
 fi
 
 log_info "Sync runtime scripts: ${SRC_DIR} -> ${DST_BIN}"
-rm -rf "${DST_BIN:?}/"*
+find "${DST_BIN}" -mindepth 1 -maxdepth 1 -exec rm -rf {} +
 cp -a "${SRC_DIR}/." "${DST_BIN}/"
 
 find "${DST_BIN}" -type f -name '*.sh' -exec chmod +x {} \;
