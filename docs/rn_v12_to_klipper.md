@@ -90,6 +90,7 @@ out/klipper.bin
 ## 4. Подготовка файла `ROBIN_NANO.bin` для SD-карты
 
 Для плат семейства Robin Nano требуется прогнать `klipper.bin` через скрипт `update_mks_robin.py`, чтобы получить корректный образ для бутлоадера.
+Репозиторный эталонный артефакт хранится в `firmware/rn12/ROBIN_NANO.bin`.
 
 ```bash
 cd /home/pi/klipper
