@@ -4,7 +4,10 @@
 ```bash # klipper-only install path
 set -euo pipefail
 REPO_URL="https://github.com/TreeD-Hub/treed-mainshellOS.git"
-BRANCH="dev-cam"
+# Channel policy:
+# - dev-cam: active canonical branch for provisioning
+# - main: legacy snapshot branch (do not use for fresh installs)
+INSTALL_REF="dev-cam"
 BASE="/home/pi/treed"
 REPO_DIR="${BASE}/treed-mainshellOS"
 
@@ -12,7 +15,7 @@ sudo systemctl stop klipper moonraker KlipperScreen 2>/dev/null || true
 
 mkdir -p "${BASE}"
 sudo rm -rf "${REPO_DIR}"
-git clone --branch "${BRANCH}" --depth 1 "${REPO_URL}" "${REPO_DIR}"
+git clone --branch "${INSTALL_REF}" --depth 1 "${REPO_URL}" "${REPO_DIR}"
 
 cd "${REPO_DIR}"
 find loader -type f -name '*.sh' -print0 | xargs -0 sed -i 's/\r$//'

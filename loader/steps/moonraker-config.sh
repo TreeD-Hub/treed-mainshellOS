@@ -21,6 +21,33 @@ if ! grp="$(pi_primary_group "${PI_USER}")"; then
   exit 1
 fi
 
+validate_repo_moonraker_layout() {
+  if [ ! -f "${SRC_CONF}" ]; then
+    log_error "Moonraker entry config not found in repo: ${SRC_CONF}"
+    exit 1
+  fi
+
+  if [ ! -d "${SRC_BASE_DIR}" ]; then
+    log_error "Moonraker base fragments directory not found in repo: ${SRC_BASE_DIR}"
+    exit 1
+  fi
+
+  if [ -z "$(find "${SRC_BASE_DIR}" -maxdepth 1 -type f -name '*.conf' -print -quit 2>/dev/null)" ]; then
+    log_error "Moonraker base fragments directory is empty: ${SRC_BASE_DIR}"
+    exit 1
+  fi
+
+  if ! grep -qE '^\[include[[:space:]]+moonraker/base/\*\.conf\][[:space:]]*$' "${SRC_CONF}"; then
+    log_error "Moonraker entry config is missing include [include moonraker/base/*.conf]: ${SRC_CONF}"
+    exit 1
+  fi
+
+  if ! grep -qE '^\[include[[:space:]]+moonraker/generated/\*\.conf\][[:space:]]*$' "${SRC_CONF}"; then
+    log_error "Moonraker entry config is missing include [include moonraker/generated/*.conf]: ${SRC_CONF}"
+    exit 1
+  fi
+}
+
 ensure_moonraker_running() {
   if ! systemctl cat moonraker.service >/dev/null 2>&1; then
     log_warn "moonraker.service not found; skipping restart/start"
@@ -149,11 +176,6 @@ deploy_treed_shell_component() {
 }
 
 deploy_base_fragments() {
-  if [ ! -d "${SRC_BASE_DIR}" ]; then
-    log_warn "Moonraker base fragments not found in repo: ${SRC_BASE_DIR}"
-    return 0
-  fi
-
   rm -rf "${DST_BASE_DIR}"
   ensure_dir "${DST_BASE_DIR}"
   cp -a "${SRC_BASE_DIR}/." "${DST_BASE_DIR}/"
@@ -162,8 +184,26 @@ deploy_base_fragments() {
   log_info "Deployed Moonraker base fragments to ${DST_BASE_DIR}"
 }
 
+prune_treed_generated_fragments() {
+  local file=""
+
+  ensure_dir "${DST_GENERATED_DIR}"
+
+  while IFS= read -r -d '' file; do
+    case "$(basename "${file}")" in
+      00-placeholder.conf) continue ;;
+    esac
+
+    if grep -qE '^####[[:space:]]+treed-generated:' "${file}" || [[ "$(basename "${file}")" == *-treed.conf ]]; then
+      rm -f "${file}"
+      log_info "Removed stale treed generated fragment: ${file}"
+    fi
+  done < <(find "${DST_GENERATED_DIR}" -maxdepth 1 -type f -name '*.conf' -print0 2>/dev/null)
+}
+
 ensure_generated_fragments_dir() {
   local placeholder=""
+  prune_treed_generated_fragments
   ensure_dir "${DST_GENERATED_DIR}"
   placeholder="${DST_GENERATED_DIR}/00-placeholder.conf"
   if [ ! -f "${placeholder}" ]; then
@@ -174,15 +214,13 @@ EOF
   chown -R "${PI_USER}:${grp}" "${DST_GENERATED_DIR}" || true
 }
 
-if [ ! -f "${SRC_CONF}" ]; then
-  log_warn "Moonraker config not found in repo, skipping"
-else
-  backup_file_once "${DST_CONF}"
-  cp -f "${SRC_CONF}" "${DST_CONF}"
-  chown "${PI_USER}:${grp}" "${DST_CONF}" || true
-  CONFIG_DEPLOYED=1
-  log_info "Deployed Moonraker config to ${DST_CONF}"
-fi
+validate_repo_moonraker_layout
+
+backup_file_once "${DST_CONF}"
+cp -f "${SRC_CONF}" "${DST_CONF}"
+chown "${PI_USER}:${grp}" "${DST_CONF}" || true
+CONFIG_DEPLOYED=1
+log_info "Deployed Moonraker config to ${DST_CONF}"
 
 deploy_base_fragments
 ensure_generated_fragments_dir
