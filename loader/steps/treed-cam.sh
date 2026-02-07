@@ -10,6 +10,9 @@ log_info "Step treed-cam"
 
 PI_USER="${PI_USER:-pi}"
 PI_HOME="${PI_HOME:-/home/${PI_USER}}"
+if ! grp="$(pi_primary_group "${PI_USER}")"; then
+  exit 1
+fi
 
 SRC_DIR="${REPO_DIR}/runtime-scripts/treed-cam"
 DST_ROOT="${PI_HOME}/treed/cam"
@@ -30,6 +33,6 @@ cp -a "${SRC_DIR}/." "${DST_BIN}/"
 
 find "${DST_BIN}" -type f -name '*.sh' -exec chmod +x {} \;
 
-chown -R "${PI_USER}:${PI_USER}" "${DST_ROOT}" || true
+chown -R "${PI_USER}:${grp}" "${DST_ROOT}" || true
 
 log_info "treed-cam: DONE (data at ${DST_DATA})"

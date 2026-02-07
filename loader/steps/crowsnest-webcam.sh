@@ -9,6 +9,9 @@ log_info "Step crowsnest-webcam: fixed 640x480@10 for single USB cam"
 
 PI_USER="${PI_USER:-pi}"
 PI_HOME="${PI_HOME:-/home/${PI_USER}}"
+if ! grp="$(pi_primary_group "${PI_USER}")"; then
+  exit 1
+fi
 
 CONFIG_DIR="${PI_HOME}/printer_data/config"
 DATA_DIR="${PI_HOME}/printer_data"
@@ -165,9 +168,9 @@ write_moonraker_webcam_fragment
 resolve_cam_device
 write_crowsnest_conf
 ensure_crowsnest_allowed_service
-chown "${PI_USER}:${PI_USER}" "${CROWSNEST_CONF}" || true
-chown "${PI_USER}:${PI_USER}" "${MOONRAKER_WEBCAM_FRAGMENT}" || true
-chown "${PI_USER}:${PI_USER}" "${MOONRAKER_ASVC}" || true
+chown "${PI_USER}:${grp}" "${CROWSNEST_CONF}" || true
+chown "${PI_USER}:${grp}" "${MOONRAKER_WEBCAM_FRAGMENT}" || true
+chown "${PI_USER}:${grp}" "${MOONRAKER_ASVC}" || true
 
 apply_services
 

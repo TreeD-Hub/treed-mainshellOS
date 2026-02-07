@@ -17,6 +17,9 @@ COMPONENT_NAME="treed_shell_command.py"
 CONFIG_DEPLOYED=0
 BASE_DEPLOYED=0
 COMPONENT_DEPLOYED=0
+if ! grp="$(pi_primary_group "${PI_USER}")"; then
+  exit 1
+fi
 
 ensure_moonraker_running() {
   if ! systemctl cat moonraker.service >/dev/null 2>&1; then
@@ -139,7 +142,7 @@ deploy_treed_shell_component() {
   dst="${components_dir}/${COMPONENT_NAME}"
   cp -f "${SRC_COMPONENT}" "${dst}"
   if [[ "${components_dir}" == "/home/${PI_USER}/"* ]]; then
-    chown "${PI_USER}":"$(id -gn "${PI_USER}")" "${dst}" || true
+    chown "${PI_USER}:${grp}" "${dst}" || true
   fi
   COMPONENT_DEPLOYED=1
   log_info "Deployed Moonraker component to ${dst}"
@@ -154,7 +157,7 @@ deploy_base_fragments() {
   rm -rf "${DST_BASE_DIR}"
   ensure_dir "${DST_BASE_DIR}"
   cp -a "${SRC_BASE_DIR}/." "${DST_BASE_DIR}/"
-  chown -R "${PI_USER}":"$(id -gn "${PI_USER}")" "${DST_BASE_DIR}" || true
+  chown -R "${PI_USER}:${grp}" "${DST_BASE_DIR}" || true
   BASE_DEPLOYED=1
   log_info "Deployed Moonraker base fragments to ${DST_BASE_DIR}"
 }
@@ -168,7 +171,7 @@ ensure_generated_fragments_dir() {
 #### reserved for loader-generated moonraker fragments
 EOF
   fi
-  chown -R "${PI_USER}":"$(id -gn "${PI_USER}")" "${DST_GENERATED_DIR}" || true
+  chown -R "${PI_USER}:${grp}" "${DST_GENERATED_DIR}" || true
 }
 
 if [ ! -f "${SRC_CONF}" ]; then
@@ -176,7 +179,7 @@ if [ ! -f "${SRC_CONF}" ]; then
 else
   backup_file_once "${DST_CONF}"
   cp -f "${SRC_CONF}" "${DST_CONF}"
-  chown "${PI_USER}":"$(id -gn "${PI_USER}")" "${DST_CONF}" || true
+  chown "${PI_USER}:${grp}" "${DST_CONF}" || true
   CONFIG_DEPLOYED=1
   log_info "Deployed Moonraker config to ${DST_CONF}"
 fi
