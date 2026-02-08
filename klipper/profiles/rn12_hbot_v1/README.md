@@ -14,7 +14,7 @@ Current Klipper entry point:
 - `steppers.cfg`
 - `extruder.cfg`
 - `endstops_mech.cfg`
-- `bed_heater_ac_ssr.cfg`
+- `bed_heater_dc.cfg`
 - `fans.cfg`
 - `macros.cfg`
 - `ui.cfg`
